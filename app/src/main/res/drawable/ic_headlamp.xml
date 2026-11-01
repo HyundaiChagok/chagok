@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 전조등. 계기판의 하향등 표시등 모양을 Material Symbols 선 굵기에 맞춰 그렸다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M13.5,6.5C18,6.5 20.5,9 20.5,12C20.5,15 18,17.5 13.5,17.5Z"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FF000000"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M10,7.5L3.5,9.5M10,11L3.5,13M10,14.5L3.5,16.5"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FF000000"
+        android:strokeLineCap="round" />
+</vector>

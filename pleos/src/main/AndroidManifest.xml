@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 조회 권한만 선언한다(요구사항 SER-08). 제어 권한(CONTROL_*)과 위치 권한은 쓰지 않는다(SAF-04, SER-02). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="pleos.car.permission.CAR_ENERGY" />
+    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
+    <uses-permission android:name="pleos.car.permission.CAR_SAFETY" />
+    <uses-permission android:name="pleos.car.permission.CAR_DOORS" />
+    <uses-permission android:name="pleos.car.permission.CAR_WINDOWS" />
+    <uses-permission android:name="pleos.car.permission.CAR_LIGHTS" />
+    <uses-permission android:name="pleos.car.permission.CAR_SEATS" />
+    <uses-permission android:name="pleos.car.permission.CAR_INFO" />
+    <!--
+        경고등(getTelltalesInfo)은 CAR_SAFETY가 아니라 PRIVATE_CAR_SAFETY를 요구한다(2026.11.01 에뮬레이터 로그로 확인).
+        에뮬레이터에서는 normal 등급이지만 실차에서는 App Market 승인이 필요할 수 있다(요구사항 미결 Q2).
+    -->
+    <uses-permission android:name="pleos.car.permission.PRIVATE_CAR_SAFETY" />
+</manifest>

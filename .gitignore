@@ -1,0 +1,12 @@
+.gradle/
+build/
+.idea/
+.kotlin/
+local.properties
+*.iml
+
+# 팀명을 넣지 않은 시험 APK와 서명 키는 올리지 않는다. 제출 APK(apk/팀명_차곡_release.apk)는 올린다.
+apk/TEAM_*
+*.jks
+*.keystore
+captures/

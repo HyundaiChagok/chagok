@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 낮 테마. 화면은 Compose가 그리고, 창 배경은 첫 프레임 전에 보이는 색만 맞춘다(ui/Theme.kt의 paper). -->
+    <style name="Theme.Chagok" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
