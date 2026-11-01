@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 밤 테마. Pleos 시스템이 밤 모드로 바뀌면 이쪽을 쓴다. -->
+    <style name="Theme.Chagok" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
+    </style>
+</resources>

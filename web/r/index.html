@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>차곡 기록</title>
+<style>
+/*
+  고객 리포트 웹(기능 정의서 M-01). 데이터는 링크의 # 뒤에만 있고 서버로 가지 않는다. 외부 스크립트·글꼴을 쓰지 않는다.
+  색과 구성은 차 화면(app/ui/Theme.kt)과 같다. 주황은 '확인 필요'에만 쓴다.
+*/
+:root{
+  --paper:#F2F4F5;--raised:#FFFFFF;--sunken:#E5E9EB;--rule:#D5DBDE;
+  --ink:#14191C;--ink-2:#55616A;--ink-3:#8B969D;
+  --signal:#EC9846;--on-signal:#1C1206;--signal-ink:#A4570F;--signal-soft:#FCEAD6;
+  --good:#1E7A4C;--good-soft:#DCF0E4;--bad:#B3261E;--bad-soft:#F9DEDC;
+  --shadow:0 6px 24px rgba(0,0,0,.08);
+  --sans:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","Roboto Mono",Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#121719;--raised:#1B2225;--sunken:#20292D;--rule:#2C353B;
+    --ink:#E3E7E9;--ink-2:#9BA6AE;--ink-3:#66727A;
+    --signal-ink:#EFA35C;--signal-soft:#3A2919;--good:#74CFA0;--good-soft:#173226;--bad:#F2B8B5;--bad-soft:#3D2020;
+    --shadow:none;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121719;--raised:#1B2225;--sunken:#20292D;--rule:#2C353B;
+  --ink:#E3E7E9;--ink-2:#9BA6AE;--ink-3:#66727A;
+  --signal-ink:#EFA35C;--signal-soft:#3A2919;--good:#74CFA0;--good-soft:#173226;--bad:#F2B8B5;--bad-soft:#3D2020;
+  --shadow:none;color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
+::selection{background:var(--signal-soft);color:var(--ink)}
+:focus-visible{outline:3px solid var(--signal);outline-offset:3px;border-radius:6px}
+main{max-width:40rem;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:24px;height:24px;flex:none;fill:currentColor}
+
+.top{display:flex;align-items:center;justify-content:space-between;min-height:48px}
+.brand{font-weight:700;font-size:1.25rem;color:var(--signal-ink);letter-spacing:.02em}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;line-height:1;padding:7px 10px;border-radius:8px;background:var(--signal-soft);color:var(--signal-ink)}
+
+h1{font-size:1.75rem;line-height:1.3;margin:16px 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.meta{margin:0;color:var(--ink-2);font-size:.9375rem}
+.meta b{font-weight:600;color:var(--ink)}
+
+/* 무결성 값: 차 화면과 맞춰 보는 기준이라 페이지에서 가장 단단한 면에 둔다. */
+.seal{margin:24px 0 8px;padding:20px;border-radius:20px;background:var(--raised);box-shadow:var(--shadow);border:1px solid var(--rule)}
+.seal-head{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:.875rem;font-weight:600}
+.seal-value{display:block;font-family:var(--mono);font-size:2rem;line-height:1.2;letter-spacing:.06em;margin:6px 0 4px}
+.seal p{margin:0;color:var(--ink-2);font-size:.875rem}
+.keep{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;margin-top:16px;border:0;border-radius:999px;background:var(--signal);color:var(--on-signal);font:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .12s ease-out,filter .12s ease-out}
+.keep:active{transform:scale(.97);filter:brightness(.95)}
+.keep .ic{width:22px;height:22px}
+.keep-done{display:none;margin-top:10px;color:var(--good);font-size:.875rem;font-weight:600;text-align:center}
+.keep-done.on{display:block}
+
+/* 13칸 막대: 칸 하나가 확인한 항목 하나다. 꽉 찬 칸은 확인 필요·변화 없음, 테두리 칸은 참고·확인 불가. */
+.strip{display:flex;gap:4px;margin:28px 0 12px}
+.strip span{flex:1;height:20px;border-radius:5px}
+.v-NEEDS_CHECK{background:var(--signal)}
+.v-NOTE{border:2.5px solid var(--signal)}
+.v-UNCHANGED{background:var(--ink-3);background:color-mix(in srgb,var(--ink-2) 35%,transparent)}
+.v-UNKNOWN{border:2.5px solid var(--ink-3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0;padding:0;list-style:none;font-size:.9375rem;color:var(--ink-2)}
+.legend li{display:flex;align-items:center;gap:8px}
+.legend i{width:14px;height:14px;border-radius:4px;flex:none}
+.legend b{color:var(--ink);font-size:1.125rem}
+.note{display:flex;gap:8px;margin:16px 0 0;color:var(--ink-2);font-size:.875rem}
+.note .ic{width:20px;height:20px;margin-top:2px}
+
+section{margin-top:32px}
+h2{display:flex;align-items:baseline;gap:8px;font-size:1.0625rem;margin:0 0 4px;color:var(--ink-2)}
+h2.warn{color:var(--signal-ink)}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.badge{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--sunken);color:var(--ink-2)}
+.warn .badge{background:var(--signal-soft);color:var(--signal-ink)}
+.badge .ic{width:22px;height:22px}
+.text{flex:1;min-width:0}
+.text strong{display:block;font-weight:600;font-size:1rem;line-height:1.45;margin-top:8px}
+.text span{display:block;color:var(--ink-2);font-size:.9375rem}
+.dim .text strong{color:var(--ink-2);font-weight:500}
+.values{display:flex;justify-content:space-between;gap:12px;margin-top:6px;color:var(--ink-2);font-size:.875rem}
+.values b{color:var(--ink);font-weight:600}
+.bar{position:relative;height:10px;margin:8px 0 4px;border-radius:5px;background:var(--sunken)}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px 0 0 5px;background:var(--ink-2)}
+.bar b{position:absolute;top:0;bottom:0;background:var(--signal)}
+.bar u{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:0;list-style:none}
+.chips li{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;background:var(--sunken);color:var(--ink-2);font-size:.9375rem}
+.chips .ic{width:18px;height:18px}
+
+/* 인수 기록: 값이 주인공이라 칸 위에 선을 둔 표로 보인다. */
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:28px}
+.fact{border-top:1px solid var(--rule);padding:14px 0 18px}
+.fact.warn{border-top:2px solid var(--signal)}
+.fact-label{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:.875rem}
+.fact-label .ic{width:18px;height:18px}
+.fact-value{display:block;font-size:1.25rem;font-weight:600;margin-top:4px}
+.fact.warn .fact-value,.fact.warn .fact-label{color:var(--signal-ink)}
+.fact.dim .fact-value{color:var(--ink-2);font-weight:500;font-size:1rem}
+
+.state{display:flex;gap:12px;align-items:flex-start;margin-top:24px;padding:16px;border-radius:16px;background:var(--sunken);color:var(--ink-2)}
+.state.error{background:var(--bad-soft);color:var(--bad)}
+.state p{margin:0}
+footer{display:flex;gap:8px;margin-top:40px;color:var(--ink-2);font-size:.8125rem}
+footer .ic{width:18px;height:18px;margin-top:2px}
+@media (prefers-reduced-motion: reduce){.keep{transition:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-fuel" viewBox="0 -960 960 960"><path d="M160-150v-630q0-24 18-42t42-18h269q24 0 42 18t18 42v288h65q20.63 0 35.31 14.69Q664-462.63 664-442v219q0 21.68 15.5 36.34Q695-172 717-172t37.5-14.66Q770-201.32 770-223v-295q-11 6-23 9t-24 3q-39.48 0-66.74-27.26Q629-560.52 629-600q0-31.61 18-56.81Q665-682 695-690l-77-77q-8-7.64-8-17.82t8-18.18q8-8 18-7.5t18 8.5l135 135q14 14 22.5 30.5T820-600v377q0 43.26-29.82 73.13-29.81 29.87-73 29.87Q674-120 644-149.87q-30-29.87-30-73.13v-219h-65v292q0 12.75-8.62 21.37Q531.75-120 519-120H190q-12.75 0-21.37-8.63Q160-137.25 160-150Zm60-402h269v-228H220v228Zm503-4q18 0 31-13t13-31q0-18-13-31t-31-13q-18 0-31 13t-13 31q0 18 13 31t31 13ZM220-180h269v-312H220v312Zm269 0H220h269Z"/></symbol><symbol id="i-battery" viewBox="0 -960 960 960"><path d="M174-280q-12.75 0-21.37-8.63Q144-297.25 144-310v-90h-34q-12.75 0-21.37-8.63Q80-417.25 80-430v-100q0-12.75 8.63-21.38Q97.25-560 110-560h34v-90q0-12.75 8.63-21.38Q161.25-680 174-680h676q12.75 0 21.38 8.62Q880-662.75 880-650v340q0 12.75-8.62 21.37Q862.75-280 850-280H174Zm30-60h176v-280H204v280Z"/></symbol><symbol id="i-odometer" viewBox="0 -960 960 960"><path d="M473.5-303.5Q517-305 537-336l179-280q7-11-1.5-19.5T695-637L418-456q-30 20-32 64t21 67q23 23 66.5 21.5ZM478-799q45 0 94.5 12t97.5 39q11 7 15 19.31 4 12.31-4 23.5t-20.5 12.69Q648-691 636-697q-41-22-83.5-32T478-739q-140.48 0-239.24 100.22Q140-538.57 140-396.02 140-351 152.5-305q12.5 46 35.5 85h579q22-36 35-84t13-94q0-35-9-75.5T776-551q-7-11-5.5-24t12.5-20q10.64-8 23.32-4T825-583q23 45 35.5 89.5T875-404q2 60-12 113t-41 98q-12 23-25.5 28t-33.5 5H192q-17 0-33.5-8.5T134-193q-26-48-40-97.5T80-396q0-83 31.5-156.5t85.5-128Q251-735 323.68-767T478-799Zm-9 331Z"/></symbol><symbol id="i-door" viewBox="0 -960 960 960"><path d="M461.5-458.68q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68ZM260-120v-60l280-49v-466q0-14-7.5-24.5T512-732l-252-39v-59l266 46q32 5 53 29.9t21 58.1v466q0 21.66-14.18 38.46Q571.64-174.73 550-171l-290 51Zm0-60h440v-590H260v-1 591Zm-110 60q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h50v-590q0-24.75 17.63-42.38Q235.25-830 260-830h440q24.75 0 42.38 17.62Q760-794.75 760-770v590h50q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Z"/></symbol><symbol id="i-window" viewBox="0 -960 960 960"><path d="M220-120q-24.75 0-42.37-17.63Q160-155.25 160-180v-600q0-24.75 17.63-42.38Q195.25-840 220-840h520q24.75 0 42.38 17.62Q800-804.75 800-780v600q0 24.75-17.62 42.37Q764.75-120 740-120H220Zm0-390h220v-25q0-6 4.5-10.5T455-550h50q6 0 10.5 4.5T520-535v25h220v-270H220v270Zm0 330h520-520Z"/></symbol><symbol id="i-cabin" viewBox="0 -960 960 960"><path d="M373.5-163.5Q330-207 330-270H180q-24 0-42-18t-18-42q0-152 93.5-258T450-705v-105q0-13 8.5-21.5T480-840q13 0 21.5 8.5T510-810v105q143 11 236.5 117T840-330q0 24-18 42t-42 18H630q0 63-43.5 106.5T480-120q-63 0-106.5-43.5ZM180-330h600q0-132-87.5-223.5T480-645q-125 0-212.5 91.5T180-330Zm364 124q26-26 26-64H390q0 38 26 64t64 26q38 0 64-26Zm-64-64Z"/></symbol><symbol id="i-seat" viewBox="0 -960 960 960"><path d="M168.5-128.63Q160-137.25 160-150v-130q0-24.75 17.63-42.38Q195.25-340 220-340h520q24.75 0 42.38 17.62Q800-304.75 800-280v130q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63-8.5-8.62-8.5-21.37v-130H220v130q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM169.88-410q-20.88 0-35.38-14.62-14.5-14.62-14.5-35.5 0-20.88 14.62-35.38 14.62-14.5 35.5-14.5 20.88 0 35.38 14.62 14.5 14.62 14.5 35.5 0 20.88-14.62 35.38-14.62 14.5-35.5 14.5ZM280-400v-380q0-24.75 17.63-42.38Q315.25-840 340-840h280q24.75 0 42.38 17.62Q680-804.75 680-780v380H280Zm474.5-24.62q-14.5-14.62-14.5-35.5 0-20.88 14.62-35.38 14.62-14.5 35.5-14.5 20.88 0 35.38 14.62 14.5 14.62 14.5 35.5 0 20.88-14.62 35.38-14.62 14.5-35.5 14.5-20.88 0-35.38-14.62ZM340-460h280v-320H340v320Zm0 0h280-280Z"/></symbol><symbol id="i-oil" viewBox="0 -960 960 960"><path d="M160-120q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h40v-270h-50q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h50v-270h-40q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h640q12.75 0 21.38 8.62Q830-822.75 830-810q0 12-8.62 21-8.63 9-21.38 9h-40v270h50q12.75 0 21.38 8.62Q840-492.75 840-480q0 12-8.62 21-8.63 9-21.38 9h-50v270h40q12.75 0 21.38 8.62Q830-162.75 830-150q0 12-8.62 21-8.63 9-21.38 9H160Zm100-60h440v-270q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5v-270H260v270q12.75 0 21.38 8.62Q290-492.75 290-480q0 12-8.62 21-8.63 9-21.38 9v270Zm297.88-184.5Q590-396 590-440.74q0-18.26-4.5-31.26T569-502l-66-78q-9.06-11-23.03-11T457-580l-66 77q-12 17-16.5 30.28-4.5 13.29-4.5 31.61 0 44.89 32 76.5T479.88-333q45.88 0 78-31.5ZM260-180v-600 600Z"/></symbol><symbol id="i-fluid" viewBox="0 -960 960 960"><path d="M251.5-174Q160-268 160-408q0-64 29-127t72.5-121q43.5-58 94-108.5T450-854q7-6 14.5-8.5T480-865q8 0 15.5 2.5T510-854q44 39 94.5 89.5t94 108.5Q742-598 771-535t29 127q0 140-91.5 234T480-80q-137 0-228.5-94ZM666-216.5Q740-293 740-408q0-79-66.5-179.5T480-800Q353-688 286.5-587.5T220-408q0 115 74 191.5T480-140q112 0 186-76.5ZM480-480Zm-1 272q16 0 24.5-5.5T512-230q0-11-8.5-17t-25.5-6q-42 0-85.5-26.5T337-373q-2-9-9-14.5t-15-5.5q-11 0-17 8.5t-4 17.5q15 84 71 121.5T479-208Z"/></symbol><symbol id="i-warning" viewBox="0 -960 960 960"><path d="M92-120q-9 0-15.5-4T66-135q-4-7-4.5-14.5T66-165l388-670q5-8 11.5-11.5T480-850q8 0 14.5 3.5T506-835l388 670q5 8 4.5 15.5T894-135q-4 7-10.5 11t-15.5 4H92Zm52-60h672L480-760 144-180Zm361.5-65.5Q514-254 514-267t-8.5-21.5Q497-297 484-297t-21.5 8.5Q454-280 454-267t8.5 21.5Q471-237 484-237t21.5-8.5Zm0-111Q514-365 514-378v-164q0-13-8.5-21.5T484-572q-13 0-21.5 8.5T454-542v164q0 13 8.5 21.5T484-348q13 0 21.5-8.5ZM480-470Z"/></symbol><symbol id="i-tire" viewBox="0 -960 960 960"><path d="M733.5-674.5Q730-682 730-690q0-11 6.27-19.5T752.5-725q15.5-11 33.5-18t36-12q3-1 6-.5t4.71 2.21Q835-751 835-742q-5 18-12 36t-18 33.5q-7 9.96-15.5 16.23T770-650q-8 0-15.5-3.5T742-662q-5-5-8.5-12.5ZM140-120q-24.75 0-42.37-17.63Q80-155.25 80-180v-600q0-24.75 17.63-42.38Q115.25-840 140-840h270q24.75 0 42.38 17.62Q470-804.75 470-780v361q14-5 27-8t23.08-3q45.8 0 77.86 32.08Q630-365.83 630-320v85q0 20 17.5 37.5t38 17.5q20.5 0 37.5-17.5t17-37.5v-225h-40v-54q-54-23-87-69.78t-33-105.98q0-79.24 56-134.74Q692-880 770.5-880t134 55.6Q960-768.81 960-689.92 960-631 927-584t-87 70v54h-40v225q0 45-34.5 80t-80 35q-45.5 0-80.5-35t-35-80v-85q0-21.25-14.37-35.63Q541.25-370 520-370q-20 0-35 14.37-15 14.38-15 35.63v140q0 24.75-17.62 42.37Q434.75-120 410-120H140Zm629.88-440Q824-560 862-597.88q38-37.88 38-92T862.12-782q-37.88-38-92-38T678-782.12q-38 37.88-38 92T677.88-598q37.88 38 92 38ZM140-180h270v-124l-49 49q-10.58 11-22.29 9.5Q327-247 319-255t-9.5-20.17Q308-287.35 319-298l91-91v-115l-49 49q-10.58 11-22.29 9.5Q327-447 319-455t-9.5-20.17Q308-487.35 319-498l91-91v-125l-49 49q-10.58 11-22.29 9.5Q327-657 319-665t-9.5-20.17Q308-697.35 319-708l72-72H159l72 72q11 10.58 9.5 22.29Q239-674 231-666t-19.71 10q-11.71 2-22.29-9l-49-49v125l91 91q11 10.58 9.5 22.29Q239-464 231-456t-19.71 10q-11.71 2-22.29-9l-49-49v115l91 91q11 10.58 9.5 22.29Q239-264 231-256t-19.71 10q-11.71 2-22.29-9l-49-49v124Zm135-300Z"/></symbol><symbol id="i-car" viewBox="0 -960 960 960"><path d="M200-204v44q0 16.67-11.74 28.33Q176.53-120 159.76-120q-16.76 0-28.26-11.67Q120-143.33 120-160v-304q0-4.67.5-9.33.5-4.67 2.5-9.67l78-236q6-19 21.75-30T258-760h444q19.5 0 35.25 11T759-719l78 236q2 5 2.5 9.67.5 4.66.5 9.33v304q0 16.67-11.74 28.33Q816.53-120 799.76-120q-16.76 0-28.26-11.67Q760-143.33 760-160v-44H200Zm3-330h554l-55-166H258l-55 166Zm-23 60v210-210Zm105.76 160q23.24 0 38.74-15.75Q340-345.5 340-368q0-23.33-15.75-39.67Q308.5-424 286-424q-23.33 0-39.67 16.26Q230-391.47 230-368.24q0 23.24 16.26 38.74 16.27 15.5 39.5 15.5ZM675-314q23.33 0 39.67-15.75Q731-345.5 731-368q0-23.33-16.26-39.67Q698.47-424 675.24-424q-23.24 0-38.74 16.26-15.5 16.27-15.5 39.5 0 23.24 15.75 38.74Q652.5-314 675-314Zm-495 50h600v-210H180v210Z"/></symbol><symbol id="i-verified" viewBox="0 -960 960 960"><path d="m437-433-73-76q-9-10-22-10t-23 9q-10 10-10 23t10 23l97 96q9 9 21 9t21-9l183-182q9-9 9-22t-10-22q-9-8-21.5-7.5T598-593L437-433ZM332-84l-62-106-124-25q-11-2-18.5-12t-5.5-21l14-120-79-92q-8-8-8-20t8-20l79-91-14-120q-2-11 5.5-21t18.5-12l124-25 62-107q6-10 17-14t22 1l109 51 109-51q11-5 22-1.5t17 13.5l63 108 123 25q11 2 18.5 12t5.5 21l-14 120 79 91q8 8 8 20t-8 20l-79 92 14 120q2 11-5.5 21T814-215l-123 25-63 107q-6 10-17 13.5T589-71l-109-51-109 51q-11 5-22 1t-17-14Zm41-55 107-45 110 45 67-100 117-30-12-119 81-92-81-94 12-119-117-28-69-100-108 45-110-45-67 100-117 28 12 119-81 94 81 92-12 121 117 28 70 100Zm107-341Z"/></symbol><symbol id="i-share" viewBox="0 -960 960 960"><path d="M686-80q-47.5 0-80.75-33.25T572-194q0-8 5-34L278-403q-16.28 17.34-37.64 27.17Q219-366 194-366q-47.5 0-80.75-33T80-480q0-48 33.25-81T194-594q24 0 45 9.3 21 9.29 37 25.7l301-173q-2-8-3.5-16.5T572-766q0-47.5 33.25-80.75T686-880q47.5 0 80.75 33.25T800-766q0 47.5-33.25 80.75T686-652q-23.27 0-43.64-9Q622-670 606-685L302-516q3 8 4.5 17.5t1.5 18q0 8.5-1 16t-3 15.5l303 173q16-15 36.09-23.5 20.1-8.5 43.07-8.5Q734-308 767-274.75T800-194q0 47.5-33.25 80.75T686-80Zm.04-60q22.96 0 38.46-15.54 15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5Zm-492-286q22.96 0 38.46-15.54 15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5ZM724.5-727.54q15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5 22.96 0 38.46-15.54ZM686-194ZM194-480Zm492-286Z"/></symbol><symbol id="i-info" viewBox="0 -960 960 960"><path d="M504.5-288.63q8.5-8.62 8.5-21.37v-180q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v180q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63Zm-1-314.57q9.5-9.2 9.5-22.8 0-14.45-9.48-24.22-9.48-9.78-23.5-9.78t-23.52 9.78Q447-640.45 447-626q0 13.6 9.48 22.8 9.48 9.2 23.5 9.2t23.52-9.2ZM480.27-80q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></symbol><symbol id="i-error" viewBox="0 -960 960 960"><path d="M503.5-289.48q9.5-9.48 9.5-23.5t-9.48-23.52q-9.48-9.5-23.5-9.5t-23.52 9.48q-9.5 9.48-9.5 23.5t9.48 23.52q9.48 9.5 23.5 9.5t23.52-9.48Zm1-152.15q8.5-8.62 8.5-21.37v-193q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v193q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63ZM480.27-80q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></symbol><symbol id="i-lock" viewBox="0 -960 960 960"><path d="M220-80q-24.75 0-42.37-17.63Q160-115.25 160-140v-434q0-24.75 17.63-42.38Q195.25-634 220-634h70v-96q0-78.85 55.61-134.42Q401.21-920 480.11-920q78.89 0 134.39 55.58Q670-808.85 670-730v96h70q24.75 0 42.38 17.62Q800-598.75 800-574v434q0 24.75-17.62 42.37Q764.75-80 740-80H220Zm0-60h520v-434H220v434Zm314.5-162.03Q557-324.06 557-355q0-30-22.67-54.5t-54.5-24.5q-31.83 0-54.33 24.5t-22.5 55q0 30.5 22.67 52.5t54.5 22q31.83 0 54.33-22.03ZM350-634h260v-96q0-54.17-37.88-92.08-37.88-37.92-92-37.92T388-822.08q-38 37.91-38 92.08v96ZM220-140v-434 434Z"/></symbol><symbol id="i-headlamp" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M13.5,6.5C18,6.5 20.5,9 20.5,12C20.5,15 18,17.5 13.5,17.5Z M10,7.5L3.5,9.5M10,11L3.5,13M10,14.5L3.5,16.5"/></symbol><symbol id="i-position" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M10.5,8A4,4 0,0 0,10.5,16ZM13.5,8A4,4 0,0 1,13.5,16Z M5,8.5L2.5,7M4.5,12L2,12M5,15.5L2.5,17M19,8.5L21.5,7M19.5,12L22,12M19,15.5L21.5,17"/></symbol></svg>
+<main>
+  <div class="top"><span class="brand">차곡</span><span id="demo"></span></div>
+  <div id="view" aria-live="polite"><div class="state"><p>기록을 여는 중입니다…</p></div></div>
+  <noscript><div class="state error"><p>자바스크립트를 켜야 기록을 열 수 있습니다.</p></div></noscript>
+  <footer><svg class="ic"><use href="#i-lock"/></svg><span>이 페이지는 링크 안에 담긴 기록을 휴대폰에서만 풀어 보여 줍니다. 기록은 서버로 보내지지 않습니다. 무결성 값이 차 화면의 값과 같으면 같은 기록입니다.</span></footer>
+</main>
+<script>
+(function () {
+  var LABELS = {
+    fuelPercent: '연료', evSocPercent: '배터리', evCharging: '충전', odometerKm: '주행거리', tripSinceRefillKm: '주유 후 주행거리',
+    doorsOpen: '문', windowsOpen: '창문', headlightsOn: '전조등', tailLampOn: '미등', cabinLightOn: '실내등',
+    engineOil: '엔진오일', brakeFluid: '브레이크액', washerFluid: '워셔액', telltales: '경고등', tires: '타이어', airbagsDeployed: '에어백'
+  };
+  // report/2부터 리포트 줄에 이름(label)이 없어 항목 키로 이름을 붙인다(:core StateItem과 같은 표).
+  var NAMES = Object.assign({ doorsLocked: '문 잠금', parkingBrakeEngaged: '주차 브레이크', seatsOccupied: '좌석' }, LABELS);
+  function nameOf(key) { return NAMES[key] || key; }
+  // 차 화면과 같은 아이콘(Material Symbols, Apache License 2.0)
+  var ICONS = {
+    fuelPercent: 'fuel', tripSinceRefillKm: 'fuel', evSocPercent: 'battery', evCharging: 'battery', odometerKm: 'odometer',
+    doorsOpen: 'door', doorsLocked: 'door', windowsOpen: 'window', headlightsOn: 'headlamp', tailLampOn: 'position', cabinLightOn: 'cabin',
+    seatsOccupied: 'seat', engineOil: 'oil', brakeFluid: 'fluid', washerFluid: 'fluid', telltales: 'warning', tires: 'tire',
+    airbagsDeployed: 'car', parkingBrakeEngaged: 'car'
+  };
+  var AREAS = { FRONT_LEFT: '운전석', FRONT_RIGHT: '조수석', REAR_LEFT: '뒷좌석 왼쪽', REAR_CENTER: '뒷좌석 가운데', REAR_RIGHT: '뒷좌석 오른쪽' };
+  var SIDES = { FRONT_LEFT: '앞 왼쪽', FRONT_RIGHT: '앞 오른쪽', REAR_LEFT: '뒤 왼쪽', REAR_CENTER: '뒤 가운데', REAR_RIGHT: '뒤 오른쪽' };
+  var ORDER = ['NEEDS_CHECK', 'NOTE', 'UNCHANGED', 'UNKNOWN'];
+  var VERDICTS = { NEEDS_CHECK: '확인 필요', NOTE: '참고', UNCHANGED: '변화 없음', UNKNOWN: '확인 불가' };
+  var DISCLAIMER = '\'확인 필요\'는 업체가 직접 볼 항목이며, 고객 책임이라는 뜻이 아닙니다.';
+  var view = document.getElementById('view');
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function icon(name) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
+  function iconFor(key) { return icon(ICONS[key] || 'car'); }
+  var DAY = { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
+  function time(iso, opts) {
+    try { return new Intl.DateTimeFormat('ko-KR', opts || DAY).format(new Date(iso)).replace(/\.\s?/g, '.').replace(/\.(\d{2}:)/, ' $1'); }
+    catch (e) { return iso; }
+  }
+  function sameDay(a, b) {
+    var f = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
+    return f.format(new Date(a)) === f.format(new Date(b));
+  }
+  function clock(iso) { return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso)); }
+  function fail(msg) { view.innerHTML = '<div class="state error" role="alert">' + icon('error') + '<p>' + esc(msg) + '</p></div>'; }
+  function bytes(b64url) {
+    var b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bin = atob(b64), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function inflate(data) {
+    var stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate'));
+    return new Response(stream).text();
+  }
+  function sha256(text) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) {
+      return 'sha256:' + Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+    });
+  }
+  function short(hash) { var h = hash.replace('sha256:', '').slice(0, 8); return h.slice(0, 4) + ' ' + h.slice(4); }
+  function percent(s) { var m = /^(\d+)%$/.exec(s || ''); return m ? +m[1] : null; }
+
+  function reading(key, r) {
+    if (r.status === 'UNSUPPORTED') return '이 차에서 지원 안 함';
+    if (r.status !== 'OK') return '읽지 못함';
+    var v = r.value;
+    if (key === 'fuelPercent' || key === 'evSocPercent') return Math.round(v) + '%';
+    if (key === 'odometerKm') return Math.round(v).toLocaleString('ko-KR') + 'km';
+    if (key === 'tripSinceRefillKm') return Math.round(v * 10) / 10 + 'km';
+    if (key === 'evCharging') return v ? '충전 중' : '충전 안 함';
+    if (typeof v === 'boolean') return v ? '켜짐' : '꺼짐';
+    if (v === 'NORMAL') return '정상';
+    if (v === 'LOW') return '부족';
+    if (key === 'telltales') return v.length ? v.map(function (t) { return t.label; }).join(', ') : '없음';
+    if (key === 'tires') {
+      var low = Object.keys(v).filter(function (a) { return v[a].low; });
+      return low.length ? low.map(function (a) { return SIDES[a] + ' 저압'; }).join(', ') : '저압 없음';
+    }
+    var on = Object.keys(v).filter(function (a) { return v[a]; });
+    var word = key === 'airbagsDeployed' ? ['전개', '전개 없음'] : ['열림', '모두 닫힘'];
+    return on.length ? on.map(function (a) { return AREAS[a]; }).join(', ') + ' ' + word[0] : word[1];
+  }
+
+  // 인수 때부터 있던 것(켜진 경고등, 부족한 소모품, 저압 타이어)은 주황으로 표시해 고객의 근거가 되게 한다.
+  function attention(key, r) {
+    if (r.status !== 'OK') return false;
+    var v = r.value;
+    if (key === 'telltales') return v.length > 0;
+    if (v === 'LOW') return true;
+    if (key === 'tires') return Object.keys(v).some(function (a) { return v[a].low; });
+    return false;
+  }
+
+  function seal(hash, sub) {
+    return '<div class="seal">' +
+      '<div class="seal-head">' + icon('verified') + '<span>무결성</span></div>' +
+      '<strong class="seal-value num">' + esc(short(hash)) + '</strong>' +
+      '<p>' + esc(sub) + '</p>' +
+      '<button type="button" class="keep" id="keep">' + icon('share') + '<span>링크 보관하기</span></button>' +
+      '<p class="keep-done" id="keep-done" role="status"></p>' +
+      '</div>';
+  }
+
+  function heading(title, meta, period) {
+    return '<h1>' + esc(title) + '</h1><p class="meta">' + meta + '</p>' + (period ? '<p class="meta num">' + esc(period) + '</p>' : '');
+  }
+
+  function renderSnapshot(json, hash) {
+    var facts = Object.keys(LABELS).filter(function (k) { return json.readings[k] && json.readings[k].status !== 'UNSUPPORTED'; }).map(function (k) {
+      var r = json.readings[k];
+      var cls = r.status !== 'OK' ? 'dim' : attention(k, r) ? 'warn' : '';
+      return '<div class="fact ' + cls + '"><span class="fact-label">' + iconFor(k) + esc(LABELS[k]) + '</span>' +
+        '<span class="fact-value num">' + esc(reading(k, r)) + '</span></div>';
+    }).join('');
+    view.innerHTML =
+      heading((json.kind === 'RETURN' ? '반납' : '인수') + ' 기록', '기록 번호 <b class="num">' + esc(json.recordNo) + '</b> · 차량 ' + esc(json.vehicleId), time(json.capturedAt)) +
+      seal(hash, '차 화면에 보이는 값과 같으면 같은 기록입니다.') +
+      '<div class="facts">' + facts + '</div>';
+  }
+
+  function rowItem(r, tone) {
+    var lines = r.verdict === 'UNKNOWN' ? [r.label + ' · ' + r.notes.join(', ')] : r.notes;
+    var before = percent(r.before), after = percent(r.after);
+    var energy = (r.item === 'fuelPercent' || r.item === 'evSocPercent') && after !== null;
+    var extra = '';
+    if (energy) {
+      var drop = before !== null && before > after ? before - after : 0;
+      extra = '<div class="values num"><span>인수 <b>' + esc(r.before || '-') + '</b></span><span>반납 <b>' + esc(r.after) + '</b></span></div>' +
+        '<div class="bar" role="img" aria-label="인수 ' + esc(r.before || '-') + ', 반납 ' + esc(r.after) + '">' +
+        '<i style="width:' + after + '%"></i>' + (drop ? '<b style="left:' + after + '%;width:' + drop + '%"></b><u style="left:' + before + '%"></u>' : '') + '</div>';
+    }
+    return '<li class="' + tone + '"><span class="badge">' + iconFor(r.item) + '</span><div class="text">' +
+      '<strong>' + esc(lines[0] || r.label) + '</strong>' +
+      lines.slice(1).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + extra + '</div></li>';
+  }
+
+  function renderReport(json, hash) {
+    var summary = /^report-summary\//.test(json.schema);
+    var rows = (json.rows || []).map(function (r) { return Object.assign({ label: nameOf(r.item) }, r); });
+    var c = json.counts || {};
+    var strip = ORDER.map(function (v) { return new Array((c[v] || 0) + 1).join('<span class="v-' + v + '"></span>'); }).join('');
+    var legend = ORDER.map(function (v) {
+      return '<li><i class="v-' + v + '"></i>' + VERDICTS[v] + ' <b class="num">' + (c[v] || 0) + '</b></li>';
+    }).join('');
+    function section(v) {
+      var group = rows.filter(function (r) { return r.verdict === v; });
+      if (!group.length) return '';
+      var tone = v === 'NEEDS_CHECK' ? 'warn' : v === 'UNKNOWN' ? 'dim' : '';
+      return '<section><h2 class="' + (v === 'NEEDS_CHECK' ? 'warn' : '') + '">' + VERDICTS[v] + ' <span class="num">' + group.length + '</span></h2>' +
+        '<ul class="rows">' + group.map(function (r) { return rowItem(r, tone); }).join('') + '</ul></section>';
+    }
+    // 요약본(report-summary/1)은 변화 없는 항목을 이름만 담는다.
+    function unchanged() {
+      // 요약본 v1은 이름, v2는 항목 키를 담는다.
+      var list = summary ? (json.unchanged || []).map(function (x) { return NAMES[x] ? { item: x, label: NAMES[x] } : { label: x }; })
+        : rows.filter(function (r) { return r.verdict === 'UNCHANGED'; });
+      if (!list.length) return '';
+      return '<section><h2>변화 없음 <span class="num">' + list.length + '</span></h2><ul class="chips">' +
+        list.map(function (r) { return '<li>' + (r.item ? iconFor(r.item) : '') + esc(r.label) + '</li>'; }).join('') + '</ul></section>';
+    }
+    // 차 화면과 같은 순서: 확인 필요 → 참고 → 변화 없음 → 확인 불가
+    var sections = section('NEEDS_CHECK') + section('NOTE') + unchanged() + section('UNKNOWN');
+    var period = sameDay(json.pickup.at, json['return'].at) ? time(json.pickup.at) + ' → ' + clock(json['return'].at) : time(json.pickup.at) + ' → ' + time(json['return'].at);
+    view.innerHTML =
+      heading('반납 리포트', '기록 번호 <b class="num">' + esc(json.recordNo) + '</b> · 차량 ' + esc(json.vehicleId), period) +
+      seal(summary ? json.reportHash : hash, summary ? '요약본입니다. 값은 원본 리포트의 무결성 값입니다.' : '차 화면에 보이는 값과 같으면 같은 기록입니다.') +
+      '<div class="strip" aria-hidden="true">' + strip + '</div><ul class="legend">' + legend + '</ul>' +
+      '<p class="note">' + icon('info') + '<span>' + esc(DISCLAIMER) + '</span></p>' +
+      sections;
+  }
+
+  // 나중에 다시 열 수 있게 링크(기록이 # 뒤에 들어 있다)를 공유하거나 복사한다.
+  function bindKeep() {
+    var button = document.getElementById('keep'), done = document.getElementById('keep-done');
+    if (!button) return;
+    button.addEventListener('click', function () {
+      var url = location.href;
+      if (navigator.share) {
+        navigator.share({ title: document.title, url: url }).catch(function () {});
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          done.textContent = '링크를 복사했습니다. 메모나 메신저에 붙여 넣어 보관하세요.';
+          done.classList.add('on');
+        }, function () { window.prompt('이 링크를 복사해 보관하세요.', url); });
+      } else {
+        window.prompt('이 링크를 복사해 보관하세요.', url);
+      }
+    });
+  }
+
+  var match = /[#&]d=([0-9]+)\.([A-Za-z0-9_-]+)/.exec(location.hash);
+  if (!match) return fail('기록이 담긴 링크가 아닙니다. 차 화면의 QR을 다시 찍어 주세요.');
+  if (match[1] !== '1') return fail('이 페이지가 모르는 기록 형식입니다.');
+  if (typeof DecompressionStream === 'undefined' || !window.crypto || !crypto.subtle) return fail('이 브라우저에서는 기록을 열 수 없습니다. 최신 브라우저로 열어 주세요.');
+
+  var text;
+  inflate(bytes(match[2])).then(function (t) { text = t; return sha256(t); }).then(function (hash) {
+    var json = JSON.parse(text);
+    if (json.demo) document.getElementById('demo').innerHTML = '<span class="tag">시연 모드</span>';
+    if (json.schema === 'snapshot/1') renderSnapshot(json, hash);
+    else if (/^report(-summary)?\/[12]$/.test(json.schema)) renderReport(json, hash);
+    else return fail('이 페이지가 모르는 기록 형식입니다.');
+    document.title = '차곡 · ' + json.recordNo;
+    bindKeep();
+  }).catch(function () { fail('기록을 풀지 못했습니다. 링크가 잘렸을 수 있습니다. QR을 다시 찍어 주세요.'); });
+})();
+</script>
+</body>
+</html>
