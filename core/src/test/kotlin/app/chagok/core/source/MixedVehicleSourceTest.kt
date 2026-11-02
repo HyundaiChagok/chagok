@@ -50,4 +50,25 @@ class MixedVehicleSourceTest {
             seen,
         )
     }
+
+    @Test
+    fun `일부 항목만 구독하면 그 항목의 변화만 온다`() = runTest {
+        val seen = mutableListOf<VehicleEvent>()
+        backgroundScope.launch { mixed.changes(setOf(StateItem.ENGINE_OIL)).collect { seen += it } }
+        runCurrent()
+
+        sdk.update { withDoor(Area.FRONT_LEFT, true).copy(engineOil = FluidLevel.LOW) }
+        script.update { withDoor(Area.FRONT_LEFT, false).copy(engineOil = FluidLevel.LOW) }
+        runCurrent()
+
+        assertEquals(listOf<VehicleEvent>(VehicleEvent.FluidChanged(StateItem.ENGINE_OIL, FluidLevel.LOW)), seen)
+    }
+
+    @Test
+    fun `차대번호는 SDK 쪽에서 읽는다`() = runTest {
+        val withVin = object : VehicleSource by sdk {
+            override suspend fun vin(): String = "KMHC851HFNU123456"
+        }
+        assertEquals("KMHC851HFNU123456", MixedVehicleSource(withVin, script, emptySet()).vin())
+    }
 }
