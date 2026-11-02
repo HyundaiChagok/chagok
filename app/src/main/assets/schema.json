@@ -1,0 +1,47 @@
+{
+  "packageName": "app.chagok",
+  "appDescription": "A rental car app that records the vehicle state at pickup and return so that the customer and the rental company keep the same record.",
+  "invokeWord": "차곡",
+  "version": "0.1.0",
+  "actionCalls": [
+    {
+      "type": "function",
+      "function": {
+        "name": "RENTAL_START_RETURN_CHECK",
+        "description": "Opens the app and starts the return check, which shows what to check in the car before returning a rental car. It runs only during a rental while the car is in park.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "component": "activity"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "RENTAL_WHAT_TO_CHECK",
+        "description": "Answers what the user should check before returning a rental car, including open doors and windows, lights left on, and how much the battery changed since pickup. It works without opening the app.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "component": "service"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "RENTAL_SHOW_RECORD",
+        "description": "Opens the app and shows the pickup record of the current rental with a QR code that copies the record to the user's phone.",
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "component": "activity"
+      }
+    }
+  ]
+}
