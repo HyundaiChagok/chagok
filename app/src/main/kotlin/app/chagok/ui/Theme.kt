@@ -17,11 +17,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.sp
 
 /**
- * 차곡의 색. 기획 문서와 같은 주황 신호색(signal)을 중심에 두고, Pleos 시스템의 낮/밤 테마를 따라 두 벌을 쓴다.
- * 주황은 "지금 볼 것"에만 쓴다. 확인이 끝난 것은 good, 읽지 못한 것은 ink3로 그린다.
+ * 차곡의 색. Pleos 시스템의 낮/밤 테마를 따라 두 벌을 쓴다.
+ * 주황(signal)은 "지금 볼 것"(확인 필요, 열린 곳)에만 쓴다. 누르는 것은 잉크색(primary)으로 채워 '문제'와 '누르세요'를 구분한다(고객 웹과 같다).
+ * 확인이 끝난 것과 고객을 지켜 주는 사실('인수 때부터')은 good, 읽지 못한 것은 회색(ink2·ink3)으로 그린다.
  */
 @Immutable
 data class ChagokColors(
@@ -35,9 +37,12 @@ data class ChagokColors(
     val rule: Color,
     val ink: Color,
     val ink2: Color,
-    /** 비활성과 장식. 작은 글자에는 쓰지 않는다(대비 3:1 미만). */
+    /** 비활성과 장식. 큰 글자(비활성 버튼)까지만 쓴다(대비 3:1 이상, 4.5:1 미만). */
     val ink3: Color,
-    /** 주 버튼 채움과 차 그림의 강조 */
+    /** 주 버튼 채움과 진행 표시의 현재 단계. Pleos 시스템 대화 상자의 주 버튼과 같은 검은 채움이고, 밤에는 밝은 채움에 어두운 글자다. */
+    val primary: Color,
+    val onPrimary: Color,
+    /** 차 그림의 강조, 확인할 것의 개수, 잔량이 모자란 칸 */
     val signal: Color,
     val onSignal: Color,
     /** 바탕 위의 주황 글자·아이콘. 바탕 대비 4.5:1 이상 */
@@ -72,12 +77,14 @@ private val Day = ChagokColors(
     rule = Color(0xFFD5DBDE),
     ink = Color(0xFF14191C),
     ink2 = Color(0xFF55616A),
-    ink3 = Color(0xFF8B969D),
+    ink3 = Color(0xFF737F87),
+    primary = Color(0xFF14191C),
+    onPrimary = Color(0xFFFFFFFF),
     signal = Color(0xFFEC9846),
     onSignal = Color(0xFF1C1206),
     signalInk = Color(0xFFA4570F),
     signalSoft = Color(0xFFFCEAD6),
-    good = Color(0xFF1E7A4C),
+    good = Color(0xFF1C7548),
     goodSoft = Color(0xFFDCF0E4),
     bad = Color(0xFFB3261E),
     badSoft = Color(0xFFF9DEDC),
@@ -102,7 +109,9 @@ private val Night = ChagokColors(
     rule = Color(0xFF2C353B),
     ink = Color(0xFFE3E7E9),
     ink2 = Color(0xFF9BA6AE),
-    ink3 = Color(0xFF66727A),
+    ink3 = Color(0xFF7E8A92),
+    primary = Color(0xFFE3E7E9),
+    onPrimary = Color(0xFF121719),
     signal = Color(0xFFEC9846),
     onSignal = Color(0xFF1C1206),
     signalInk = Color(0xFFEFA35C),
@@ -129,21 +138,24 @@ private val LocalChagokColors = staticCompositionLocalOf { Day }
 // 시스템 설정이 굵기를 한 단 무겁게 잡아(600 → Bold, 700 → ExtraBold) 제목도 SemiBold까지만 쓴다.
 private val Strong = FontWeight.SemiBold
 
+// 한국어 줄바꿈을 글자가 아니라 어절에서 한다. 기본값은 '주세/요.'처럼 낱말 가운데서 끊는다. API 33 미만에서는 효과가 없다.
+private val KeepWords = LineBreak(LineBreak.Strategy.HighQuality, LineBreak.Strictness.Normal, LineBreak.WordBreak.Phrase)
+
 // 운전석에서 팔을 뻗어 읽는 거리라 휴대폰보다 두 단 크게 잡는다. 가장 작은 글자도 22sp다(요구사항 QUR-03).
 private val type = Typography(
-    displayMedium = TextStyle(fontSize = 76.sp, lineHeight = 84.sp, fontWeight = Strong),
-    headlineLarge = TextStyle(fontSize = 52.sp, lineHeight = 66.sp, fontWeight = Strong),
-    headlineMedium = TextStyle(fontSize = 44.sp, lineHeight = 56.sp, fontWeight = Strong),
-    headlineSmall = TextStyle(fontSize = 36.sp, lineHeight = 46.sp, fontWeight = Strong),
-    titleLarge = TextStyle(fontSize = 34.sp, lineHeight = 44.sp, fontWeight = FontWeight.Medium),
-    titleMedium = TextStyle(fontSize = 30.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium),
-    titleSmall = TextStyle(fontSize = 26.sp, lineHeight = 34.sp, fontWeight = Strong),
-    bodyLarge = TextStyle(fontSize = 30.sp, lineHeight = 42.sp),
-    bodyMedium = TextStyle(fontSize = 26.sp, lineHeight = 38.sp),
-    bodySmall = TextStyle(fontSize = 24.sp, lineHeight = 34.sp),
-    labelLarge = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, fontWeight = Strong),
-    labelMedium = TextStyle(fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Medium),
-    labelSmall = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium),
+    displayMedium = TextStyle(lineBreak = KeepWords, fontSize = 76.sp, lineHeight = 84.sp, fontWeight = Strong),
+    headlineLarge = TextStyle(lineBreak = KeepWords, fontSize = 52.sp, lineHeight = 66.sp, fontWeight = Strong),
+    headlineMedium = TextStyle(lineBreak = KeepWords, fontSize = 44.sp, lineHeight = 56.sp, fontWeight = Strong),
+    headlineSmall = TextStyle(lineBreak = KeepWords, fontSize = 36.sp, lineHeight = 46.sp, fontWeight = Strong),
+    titleLarge = TextStyle(lineBreak = KeepWords, fontSize = 34.sp, lineHeight = 44.sp, fontWeight = FontWeight.Medium),
+    titleMedium = TextStyle(lineBreak = KeepWords, fontSize = 30.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium),
+    titleSmall = TextStyle(lineBreak = KeepWords, fontSize = 26.sp, lineHeight = 34.sp, fontWeight = Strong),
+    bodyLarge = TextStyle(lineBreak = KeepWords, fontSize = 30.sp, lineHeight = 42.sp),
+    bodyMedium = TextStyle(lineBreak = KeepWords, fontSize = 26.sp, lineHeight = 38.sp),
+    bodySmall = TextStyle(lineBreak = KeepWords, fontSize = 24.sp, lineHeight = 34.sp),
+    labelLarge = TextStyle(lineBreak = KeepWords, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = Strong),
+    labelMedium = TextStyle(lineBreak = KeepWords, fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Medium),
+    labelSmall = TextStyle(lineBreak = KeepWords, fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium),
 )
 
 private val shapes = Shapes(
@@ -156,8 +168,8 @@ private val shapes = Shapes(
 val TextStyle.tabular: TextStyle get() = copy(fontFeatureSettings = "tnum")
 
 private fun ChagokColors.material(): ColorScheme = (if (dark) darkColorScheme() else lightColorScheme()).copy(
-    primary = signal,
-    onPrimary = onSignal,
+    primary = primary,
+    onPrimary = onPrimary,
     primaryContainer = signalSoft,
     onPrimaryContainer = signalInk,
     secondary = ink2,

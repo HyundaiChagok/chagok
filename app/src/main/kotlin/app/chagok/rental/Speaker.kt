@@ -3,71 +3,82 @@ package app.chagok.rental
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import android.util.Log
+import app.chagok.core.voice.SpeechEngine
+import app.chagok.core.voice.SpeechEvents
+import app.chagok.core.voice.VoiceEngine
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * 음성 안내(기능 정의서 F-VOI-02). 한 번에 하나씩 순서대로 말한다. TTS를 쓸 수 없으면 조용히 넘어가고,
- * 화면은 같은 문구를 자막으로 보여 준다. 언제 말해도 되는지는 [RentalController]가 정한다.
- * [speaking]은 자막 띠에 지금 말하는 중인지를 보여 주는 데 쓴다.
+ * Android TTS로 말하는 [SpeechEngine](기능 정의서 F-VOI-02). Pleos TTS를 쓸 수 없을 때의 대안이다.
+ * Pleos 에뮬레이터에서는 기본 엔진이 없어 status=-1로 실패한다. TTS_SERVICE를 선언한 ai.pleos.playground.caas를 엔진으로 직접 지정해도 status=-1이다(2026.11.02 확인).
  */
-class Speaker(context: Context) : TextToSpeech.OnInitListener {
-    private val pending = mutableListOf<String>()
-    private val inFlight = AtomicInteger(0)
-    private val _speaking = MutableStateFlow(false)
-    val speaking: StateFlow<Boolean> = _speaking.asStateFlow()
+class Speaker(context: Context) : SpeechEngine, TextToSpeech.OnInitListener {
+    override val kind = VoiceEngine.ANDROID_TTS
 
-    // 엔진 스레드에서 불린다. 줄 선 문장이 모두 끝나야 말하기가 끝난 것으로 본다.
+    private val app = context.applicationContext
+    private var events: SpeechEvents? = null
+    private var tts: TextToSpeech? = null
+    private var sequence = 0
+
+    // 엔진 스레드에서 불린다.
     private val progress = object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) {
-            _speaking.value = true
+            events?.started()
         }
 
-        override fun onDone(utteranceId: String?) = finished()
+        override fun onDone(utteranceId: String?) {
+            events?.finished()
+        }
 
-        override fun onStop(utteranceId: String?, interrupted: Boolean) = finished()
+        override fun onStop(utteranceId: String?, interrupted: Boolean) {
+            events?.finished()
+        }
 
         @Deprecated("API 21부터 onError(String, Int)가 있지만 추상 메서드라 함께 구현한다.")
-        override fun onError(utteranceId: String?) = finished()
+        override fun onError(utteranceId: String?) {
+            events?.finished()
+        }
 
-        override fun onError(utteranceId: String?, errorCode: Int) = finished()
+        override fun onError(utteranceId: String?, errorCode: Int) {
+            events?.finished()
+        }
     }
 
-    @Volatile
-    private var ready = false
-
-    // TTS 엔진에 따라 생성자 안에서 바로 onInit을 부르므로, 위의 필드를 모두 만든 뒤에 만든다.
-    private val tts = TextToSpeech(context.applicationContext, this)
+    override fun prepare(events: SpeechEvents) {
+        this.events = events
+        tts = TextToSpeech(app, this)
+    }
 
     override fun onInit(status: Int) {
-        ready = status == TextToSpeech.SUCCESS && tts.setLanguage(Locale.KOREAN) >= TextToSpeech.LANG_AVAILABLE
-        if (ready) tts.setOnUtteranceProgressListener(progress)
-        val queued = synchronized(pending) { pending.toList().also { pending.clear() } }
-        if (ready) queued.forEach(::say)
-    }
-
-    fun say(text: String) {
-        if (ready) {
-            inFlight.incrementAndGet()
-            tts.speak(text, TextToSpeech.QUEUE_ADD, null, text.hashCode().toString())
+        val engine = tts
+        val usable = status == TextToSpeech.SUCCESS && engine != null && engine.setLanguage(Locale.KOREAN) >= TextToSpeech.LANG_AVAILABLE
+        Log.i(TAG, "Android TTS 초기화: status=$status, usable=$usable")
+        if (usable && engine != null) {
+            engine.setAudioAttributes(FocusedSpeech.ATTRIBUTES)
+            engine.setOnUtteranceProgressListener(progress)
+            events?.ready()
         } else {
-            synchronized(pending) { pending += text }
+            events?.broken("status=$status")
         }
     }
 
-    fun stop() {
-        tts.stop()
-        inFlight.set(0)
-        _speaking.value = false
+    override fun speak(text: String) {
+        val engine = tts ?: return
+        if (engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "chagok-${++sequence}") != TextToSpeech.SUCCESS) events?.finished()
     }
 
-    private fun finished() {
-        if (inFlight.decrementAndGet() <= 0) {
-            inFlight.set(0)
-            _speaking.value = false
-        }
+    override fun cancel() {
+        tts?.stop()
+    }
+
+    override fun release() {
+        tts?.shutdown()
+        tts = null
+        events = null
+    }
+
+    private companion object {
+        const val TAG = "ChagokVoice"
     }
 }
