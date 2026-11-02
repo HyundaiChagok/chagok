@@ -26,7 +26,7 @@ class FakeVehicle(initial: VehicleState = VehicleState()) : VehicleSource {
 
     override fun changes(): Flow<VehicleEvent> = events.asSharedFlow()
 
-    /** 상태를 바꾸고, 바뀐 문·잠금·창문·라이트·주차 브레이크·착석·소모품·경고등·에어백을 이벤트로 내보낸다. */
+    /** 상태를 바꾸고, 바뀐 문·잠금·창문·트렁크·충전구·라이트·주차 브레이크·착석·소모품·경고등·에어백을 이벤트로 내보낸다. */
     @Synchronized
     fun update(transform: VehicleState.() -> VehicleState) {
         val old = current
@@ -55,6 +55,10 @@ internal fun eventsBetween(old: VehicleState, new: VehicleState): List<VehicleEv
     changed(old.doorsOpen, new.doorsOpen).forEach { (area, open) -> add(VehicleEvent.DoorChanged(area, open)) }
     changed(old.doorsLocked, new.doorsLocked).forEach { (area, locked) -> add(VehicleEvent.LockChanged(area, locked)) }
     changed(old.windowsOpen, new.windowsOpen).forEach { (area, open) -> add(VehicleEvent.WindowChanged(area, open)) }
+    listOf(
+        Triple(StateItem.TRUNK, old.trunkOpen, new.trunkOpen),
+        Triple(StateItem.CHARGE_PORT, old.chargePortOpen, new.chargePortOpen),
+    ).forEach { (item, was, now) -> now?.takeIf { it != was }?.let { add(VehicleEvent.ClosureChanged(item, it)) } }
     listOf(
         Triple(StateItem.HEADLIGHTS, old.headlightsOn, new.headlightsOn),
         Triple(StateItem.TAIL_LAMP, old.tailLampOn, new.tailLampOn),
