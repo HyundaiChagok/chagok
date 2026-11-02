@@ -1,4 +1,4 @@
-// Pleos Playground Vehicle SDK로 :core의 VehicleSource를 구현하는 Android 라이브러리. 차 데이터는 이 모듈만 SDK로 읽는다.
+// Pleos Playground SDK를 :core의 인터페이스로 감싸는 Android 라이브러리. Vehicle은 VehicleSource, TextToSpeech는 SpeechEngine, SpeechToText는 ReplyListener, NaviHelper는 ReturnNavigation이다. SDK를 직접 쓰는 코드는 이 모듈에만 둔다.
 plugins {
     alias(libs.plugins.android.library)
 }
@@ -20,5 +20,8 @@ android {
 dependencies {
     api(project(":core"))
     implementation(libs.pleos.vehicle)
+    implementation(libs.pleos.tts)
+    implementation(libs.pleos.stt)
+    implementation(libs.pleos.navi)
     implementation(libs.kotlinx.coroutines.android)
 }
