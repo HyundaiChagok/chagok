@@ -14,4 +14,18 @@
         에뮬레이터에서는 normal 등급이지만 실차에서는 App Market 승인이 필요할 수 있다(요구사항 미결 Q2).
     -->
     <uses-permission android:name="pleos.car.permission.PRIVATE_CAR_SAFETY" />
+
+    <!-- 음성 안내(PleosSpeechEngine). SDK가 합치는 INTERNET 권한은 ON_DEVICE 모드에서 쓰지 않는다. -->
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+
+    <!-- '반납 기록을 남길까요?'에 네/아니요로 답할 때만 듣는다(PleosReplyListener). 녹음은 Speech Service가 하므로 RECORD_AUDIO를 선언하지 않는다(2026.11.02 에뮬레이터 확인). -->
+    <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
+
+    <!--
+        반납 지점 길안내(PleosNavigation). NAVI_ROUTE는 requestTrip(도착 예상 배터리), NAVI_ROUTE_SEARCH는 requestRoute, NAVI_CUSTOM_MAP은 근처 충전소 화면에 쓴다.
+        NAVI_ROUTE로 읽을 수 있는 현재 위치와 목적지 정보는 부르지 않는다(SER-02).
+    -->
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE_SEARCH" />
+    <uses-permission android:name="pleos.car.permission.NAVI_CUSTOM_MAP" />
 </manifest>
