@@ -7,6 +7,7 @@ import app.chagok.core.model.item
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.merge
+import java.time.Instant
 
 /**
  * 두 소스를 항목별로 합친다. [overrides]에 든 항목은 [secondary] 값을, 나머지는 [primary] 값을 쓴다.
@@ -25,4 +26,14 @@ class MixedVehicleSource(
         primary.changes().filter { it.item !in overrides },
         secondary.changes().filter { it.item in overrides },
     )
+
+    override fun changes(items: Set<StateItem>): Flow<VehicleEvent> = merge(
+        primary.changes(items - overrides),
+        secondary.changes(items intersect overrides),
+    )
+
+    override suspend fun vin(): String? = primary.vin()
+
+    // 시나리오가 채우는 항목은 SDK 값이 아니므로 시각을 보이지 않는다.
+    override fun lastCallbacks(): Map<StateItem, Instant> = primary.lastCallbacks() - overrides
 }

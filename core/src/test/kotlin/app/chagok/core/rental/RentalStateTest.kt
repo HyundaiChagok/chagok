@@ -50,6 +50,16 @@ class RentalStateTest {
     }
 
     @Test
+    fun `직원 반납 기록은 대여 중이나 반납 체크 중에만 받는다`() {
+        assertEquals(RETURN, IN_RENTAL.next(RentalEvent.StaffReturn))
+        assertEquals(RETURN, RETURN_CHECK.next(RentalEvent.StaffReturn))
+        assertNull(IDLE.next(RentalEvent.StaffReturn))
+        assertNull(NOTICE.next(RentalEvent.StaffReturn))
+        assertNull(RETURNED.next(RentalEvent.StaffReturn))
+        assertNull(VOIDED.next(RentalEvent.StaffReturn))
+    }
+
+    @Test
     fun `기록 번호는 차량-월일-순번이다`() {
         val day = LocalDate.of(2026, 11, 5)
         assertEquals("0007-1105-A1", RecordNumber.of("7", day, 0))

@@ -19,6 +19,9 @@ sealed interface RentalEvent {
     data object ReturnFailed : RentalEvent
     data object Close : RentalEvent
 
+    /** 고객이 차를 두고 떠났을 때 직원이 반납 체크 없이 반납 기록을 남긴다. */
+    data object StaffReturn : RentalEvent
+
     /** 직원만 할 수 있고 사유가 있어야 한다. */
     data class Void(val reason: String) : RentalEvent
 }
@@ -44,12 +47,13 @@ fun RentalState.next(event: RentalEvent): RentalState? = when (this) {
     }
     RentalState.IN_RENTAL -> when (event) {
         RentalEvent.StartReturnCheck -> RentalState.RETURN_CHECK
+        RentalEvent.StaffReturn -> RentalState.RETURN
         is RentalEvent.Void -> RentalState.VOIDED.takeIf { event.reason.isNotBlank() }
         else -> null
     }
     RentalState.RETURN_CHECK -> when (event) {
         RentalEvent.CancelReturnCheck -> RentalState.IN_RENTAL
-        RentalEvent.ConfirmReturn -> RentalState.RETURN
+        RentalEvent.ConfirmReturn, RentalEvent.StaffReturn -> RentalState.RETURN
         is RentalEvent.Void -> RentalState.VOIDED.takeIf { event.reason.isNotBlank() }
         else -> null
     }
