@@ -9,7 +9,9 @@
 <style>
 /*
   고객 리포트 웹(기능 정의서 M-01). 데이터는 링크의 # 뒤에만 있고 서버로 가지 않는다. 외부 스크립트·글꼴을 쓰지 않는다.
-  색과 구성은 차 화면(app/ui/Theme.kt)과 같다. 주황은 '확인 필요'에만 쓴다.
+  주된 순간은 며칠 뒤 업체 문자를 받고 다시 여는 때다. 그래서 결론 → 보낼 문구 → 보관 → 항목별 내용 → 근거 순서로 둔다.
+  색은 차 화면(app/ui/Theme.kt)과 같다. 주황은 '확인 필요'에만, 초록은 고객을 보호하는 사실('인수 때부터')과 완료에만 쓴다.
+  누르는 것은 잉크색으로 채워 '문제'와 '누르세요'를 구분한다.
 */
 :root{
   --paper:#F2F4F5;--raised:#FFFFFF;--sunken:#E5E9EB;--rule:#D5DBDE;
@@ -38,130 +40,222 @@
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
-::selection{background:var(--signal-soft);color:var(--ink)}
-:focus-visible{outline:3px solid var(--signal);outline-offset:3px;border-radius:6px}
-main{max-width:40rem;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+::selection{background:var(--rule);color:var(--ink)}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+main{max-width:40rem;margin:0 auto;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .num{font-variant-numeric:tabular-nums}
 .ic{width:24px;height:24px;flex:none;fill:currentColor}
 
-.top{display:flex;align-items:center;justify-content:space-between;min-height:48px}
-.brand{font-weight:700;font-size:1.25rem;color:var(--signal-ink);letter-spacing:.02em}
-.tag{display:inline-flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;line-height:1;padding:7px 10px;border-radius:8px;background:var(--signal-soft);color:var(--signal-ink)}
+.top{display:flex;align-items:center;gap:8px;min-height:44px}
+.brand{font-weight:700;font-size:1.125rem;letter-spacing:.02em}
+.doc{color:var(--ink-2);font-size:.9375rem}
+#demo{margin-left:auto}
+.tag{display:inline-flex;align-items:center;font-size:.8125rem;font-weight:600;line-height:1;padding:7px 10px;border-radius:8px;background:var(--sunken);color:var(--ink-2)}
 
-h1{font-size:1.75rem;line-height:1.3;margin:16px 0 4px;letter-spacing:-.01em;text-wrap:balance}
-.meta{margin:0;color:var(--ink-2);font-size:.9375rem}
+/* 결론. 제목 자체가 답이다. 숫자는 굵은 잉크, 잇는 말은 한 단 낮춘다. */
+h1{font-size:1.625rem;line-height:1.35;font-weight:500;letter-spacing:-.01em;margin:10px 0 0;color:var(--ink-2)}
+h1 .l{display:block;text-wrap:balance}
+h1 b{font-weight:700;color:var(--ink)}
+h1 .warn,h1 .warn b{color:var(--signal-ink)}
+.basis{margin:4px 0 0;color:var(--ink-2);font-size:.875rem}
+.status{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:6px;font-size:.9375rem;line-height:1.5}
+.status li{display:flex;gap:8px;color:var(--ink-2)}
+.status .ic{width:20px;height:20px;margin-top:1px}
+.status b{font-weight:700;margin-right:6px}
+.status .warn .ic,.status .warn b{color:var(--signal-ink)}
+.status .good .ic,.status .good b{color:var(--good)}
+.note{display:flex;gap:8px;margin:10px 0 0;color:var(--ink-2);font-size:.8125rem;line-height:1.5}
+.note .ic{width:18px;height:18px;margin-top:1px}
+.meta{margin:12px 0 0;color:var(--ink-2);font-size:.875rem;line-height:1.55}
+.meta p{margin:0}
 .meta b{font-weight:600;color:var(--ink)}
 
-/* 무결성 값: 차 화면과 맞춰 보는 기준이라 페이지에서 가장 단단한 면에 둔다. */
-.seal{margin:24px 0 8px;padding:20px;border-radius:20px;background:var(--raised);box-shadow:var(--shadow);border:1px solid var(--rule)}
-.seal-head{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:.875rem;font-weight:600}
-.seal-value{display:block;font-family:var(--mono);font-size:2rem;line-height:1.2;letter-spacing:.06em;margin:6px 0 4px}
-.seal p{margin:0;color:var(--ink-2);font-size:.875rem}
-.keep{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;margin-top:16px;border:0;border-radius:999px;background:var(--signal);color:var(--on-signal);font:inherit;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .12s ease-out,filter .12s ease-out}
-.keep:active{transform:scale(.97);filter:brightness(.95)}
-.keep .ic{width:22px;height:22px}
-.keep-done{display:none;margin-top:10px;color:var(--good);font-size:.875rem;font-weight:600;text-align:center}
-.keep-done.on{display:block}
+/* 보낼 문구와 보관. 면은 문구 칸 하나만 쓴다. */
+.act{margin-top:24px}
+.act h2{color:var(--ink);font-size:1.125rem;font-weight:700;margin:0}
+.hint{margin:2px 0 0;color:var(--ink-2);font-size:.9375rem;line-height:1.5}
+.quote{margin:10px 0 0;padding:12px 14px;border-radius:12px;background:var(--sunken);font-size:.9375rem;line-height:1.55}
+.quote .link{color:var(--ink-2);overflow-wrap:anywhere}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;margin-top:12px;padding:8px 16px;border:0;border-radius:999px;font:inherit;font-size:1rem;font-weight:700;line-height:1.3;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s ease-out,background-color .15s ease-out}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.65;cursor:progress}
+.btn .ic{width:22px;height:22px}
+.primary{background:var(--ink);color:var(--paper)}
+.quiet{background:var(--sunken);color:var(--ink);min-height:48px;font-size:.9375rem;font-weight:600}
+.pair{display:flex;gap:8px;margin-top:8px}
+.pair .btn{flex:1 1 0;min-width:0;margin-top:0;padding-left:8px;padding-right:8px}
+.done{margin:0;color:var(--good);font-size:.875rem;font-weight:600}
+.done:not(:empty){margin-top:10px}
+.done.miss{color:var(--ink)}
+.manual{display:block;width:100%;margin-top:10px;padding:12px;border:1px solid var(--rule);border-radius:12px;background:var(--raised);color:var(--ink);font:inherit;font-size:16px;line-height:1.45;resize:vertical}
+.manual[hidden],.shot[hidden]{display:none}
+.shot{margin:12px 0 0}
+.shot img{display:block;width:100%;max-width:280px;height:auto;border:1px solid var(--rule);border-radius:8px}
+.shot figcaption{margin-top:8px;color:var(--ink-2);font-size:.875rem;line-height:1.5}
+@media (hover:hover){
+  .primary:hover{background:color-mix(in srgb,var(--ink) 84%,var(--paper))}
+  .quiet:hover{background:var(--rule)}
+}
 
-/* 13칸 막대: 칸 하나가 확인한 항목 하나다. 꽉 찬 칸은 확인 필요·변화 없음, 테두리 칸은 참고·확인 불가. */
-.strip{display:flex;gap:4px;margin:28px 0 12px}
+/* 13칸 막대: 칸 하나가 비교한 항목 하나다. 꽉 찬 칸은 확인 필요·인수 때부터·변화 없음, 테두리 칸은 참고·확인 불가. */
+.strip{display:flex;gap:4px;margin:10px 0 12px}
 .strip span{flex:1;height:20px;border-radius:5px}
 .v-NEEDS_CHECK{background:var(--signal)}
-.v-NOTE{border:2.5px solid var(--signal)}
+.v-SHIELD{background:var(--good)}
+.v-NOTE{border:2.5px solid var(--ink-2)}
 .v-UNCHANGED{background:var(--ink-3);background:color-mix(in srgb,var(--ink-2) 35%,transparent)}
-.v-UNKNOWN{border:2.5px solid var(--ink-3)}
-.legend{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0;padding:0;list-style:none;font-size:.9375rem;color:var(--ink-2)}
+.v-UNKNOWN{border:2.5px dashed var(--ink-3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none;font-size:.9375rem;color:var(--ink-2)}
 .legend li{display:flex;align-items:center;gap:8px}
 .legend i{width:14px;height:14px;border-radius:4px;flex:none}
-.legend b{color:var(--ink);font-size:1.125rem}
-.note{display:flex;gap:8px;margin:16px 0 0;color:var(--ink-2);font-size:.875rem}
-.note .ic{width:20px;height:20px;margin-top:2px}
+.legend b{color:var(--ink);font-size:1.0625rem}
 
 section{margin-top:32px}
-h2{display:flex;align-items:baseline;gap:8px;font-size:1.0625rem;margin:0 0 4px;color:var(--ink-2)}
+h2{display:flex;align-items:center;gap:8px;font-size:1.0625rem;font-weight:700;margin:0 0 4px;color:var(--ink-2)}
+h2 .ic{width:20px;height:20px}
 h2.warn{color:var(--signal-ink)}
+h2.good{color:var(--good)}
 .rows{list-style:none;margin:0;padding:0}
 .rows li{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule)}
 .badge{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--sunken);color:var(--ink-2)}
 .warn .badge{background:var(--signal-soft);color:var(--signal-ink)}
+.good .badge{background:var(--good-soft);color:var(--good)}
 .badge .ic{width:22px;height:22px}
 .text{flex:1;min-width:0}
 .text strong{display:block;font-weight:600;font-size:1rem;line-height:1.45;margin-top:8px}
-.text span{display:block;color:var(--ink-2);font-size:.9375rem}
+.text span{display:block;color:var(--ink-2);font-size:.9375rem;line-height:1.5}
+.text .says{color:var(--good);font-weight:600}
 .dim .text strong{color:var(--ink-2);font-weight:500}
 .values{display:flex;justify-content:space-between;gap:12px;margin-top:6px;color:var(--ink-2);font-size:.875rem}
+.values span{font-size:inherit}
+.text .values span:last-child{text-align:right}
 .values b{color:var(--ink);font-weight:600}
 .bar{position:relative;height:10px;margin:8px 0 4px;border-radius:5px;background:var(--sunken)}
 .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:5px 0 0 5px;background:var(--ink-2)}
-.bar b{position:absolute;top:0;bottom:0;background:var(--signal)}
+.bar b{position:absolute;top:0;bottom:0;background:var(--ink-3)}
+.warn .bar b{background:var(--signal)}
 .bar u{position:absolute;top:-5px;bottom:-5px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:0;list-style:none}
 .chips li{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;background:var(--sunken);color:var(--ink-2);font-size:.9375rem}
 .chips .ic{width:18px;height:18px}
 
+/* 대여 중 기록: 시각 칸과 내용 칸 두 줄로 읽는다. */
+.tl{list-style:none;margin:8px 0 0;padding:0}
+.tl li{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--rule);line-height:1.5}
+.tl time{color:var(--ink-2);font-size:.9375rem;white-space:nowrap}
+.tl .gap{color:var(--ink-2);border-bottom-style:dashed}
+.tl .gap b{display:flex;align-items:flex-start;gap:6px;font-weight:600}
+.tl .gap .ic{width:20px;height:20px;margin-top:2px}
+.tl .gap span span{display:block;font-size:.9375rem}
+.tl-more{margin:10px 0 0;color:var(--ink-2);font-size:.9375rem}
+.tl-more b{font-weight:600;color:var(--ink)}
+
 /* 인수 기록: 값이 주인공이라 칸 위에 선을 둔 표로 보인다. */
-.facts{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:28px}
-.fact{border-top:1px solid var(--rule);padding:14px 0 18px}
-.fact.warn{border-top:2px solid var(--signal)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-top:8px}
+.fact{border-top:1px solid var(--rule);padding:14px 0 18px;min-width:0}
 .fact-label{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:.875rem}
 .fact-label .ic{width:18px;height:18px}
-.fact-value{display:block;font-size:1.25rem;font-weight:600;margin-top:4px}
-.fact.warn .fact-value,.fact.warn .fact-label{color:var(--signal-ink)}
+.fact-value{display:block;font-size:1.25rem;font-weight:600;line-height:1.35;margin-top:4px}
 .fact.dim .fact-value{color:var(--ink-2);font-weight:500;font-size:1rem}
+
+/* 근거: 무결성 값과 시각, 적용 기준. 말할 때 읽어 줄 수 있게 값을 오른쪽 끝에 맞춘다. */
+.seal-head{display:flex;align-items:center;gap:6px;margin-top:8px;color:var(--ink-2);font-size:.875rem}
+.seal-head .ic{width:18px;height:18px}
+.seal-value{display:block;font-family:var(--mono);font-size:1.375rem;font-weight:600;line-height:1.3;letter-spacing:.05em;margin-top:2px}
+.seal-note{margin:4px 0 0;color:var(--ink-2);font-size:.875rem;line-height:1.5}
+.proof{margin:12px 0 0}
+.proof div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--rule);font-size:.9375rem;line-height:1.5}
+.proof dt{flex:none;color:var(--ink-2)}
+.proof dd{margin:0;min-width:0;text-align:right;font-weight:600}
+.proof small{display:block;color:var(--ink-2);font-size:.875rem;font-weight:400}
 
 .state{display:flex;gap:12px;align-items:flex-start;margin-top:24px;padding:16px;border-radius:16px;background:var(--sunken);color:var(--ink-2)}
 .state.error{background:var(--bad-soft);color:var(--bad)}
 .state p{margin:0}
-footer{display:flex;gap:8px;margin-top:40px;color:var(--ink-2);font-size:.8125rem}
-footer .ic{width:18px;height:18px;margin-top:2px}
-@media (prefers-reduced-motion: reduce){.keep{transition:none}}
+/* 업체용 길. 고객의 행동(채운 버튼)과 섞이지 않게 선 아래 글자 버튼으로만 둔다. */
+.ops{margin-top:40px;padding-top:6px;border-top:1px solid var(--rule)}
+.ops-add{display:flex;align-items:center;min-height:48px;padding:0;border:0;background:none;color:var(--ink-2);font:inherit;font-size:.9375rem;line-height:1.45;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.ops-hint{margin:0;color:var(--ink-2);font-size:.875rem;line-height:1.5}
+@media (hover:hover){.ops-add:hover{color:var(--ink)}}
+footer{display:flex;gap:8px;margin-top:40px;color:var(--ink-2);font-size:.8125rem;line-height:1.5}
+footer .ic{width:18px;height:18px;margin-top:1px}
+@media (prefers-reduced-motion: reduce){.btn{transition:none}.btn:active{transform:none}}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-fuel" viewBox="0 -960 960 960"><path d="M160-150v-630q0-24 18-42t42-18h269q24 0 42 18t18 42v288h65q20.63 0 35.31 14.69Q664-462.63 664-442v219q0 21.68 15.5 36.34Q695-172 717-172t37.5-14.66Q770-201.32 770-223v-295q-11 6-23 9t-24 3q-39.48 0-66.74-27.26Q629-560.52 629-600q0-31.61 18-56.81Q665-682 695-690l-77-77q-8-7.64-8-17.82t8-18.18q8-8 18-7.5t18 8.5l135 135q14 14 22.5 30.5T820-600v377q0 43.26-29.82 73.13-29.81 29.87-73 29.87Q674-120 644-149.87q-30-29.87-30-73.13v-219h-65v292q0 12.75-8.62 21.37Q531.75-120 519-120H190q-12.75 0-21.37-8.63Q160-137.25 160-150Zm60-402h269v-228H220v228Zm503-4q18 0 31-13t13-31q0-18-13-31t-31-13q-18 0-31 13t-13 31q0 18 13 31t31 13ZM220-180h269v-312H220v312Zm269 0H220h269Z"/></symbol><symbol id="i-battery" viewBox="0 -960 960 960"><path d="M174-280q-12.75 0-21.37-8.63Q144-297.25 144-310v-90h-34q-12.75 0-21.37-8.63Q80-417.25 80-430v-100q0-12.75 8.63-21.38Q97.25-560 110-560h34v-90q0-12.75 8.63-21.38Q161.25-680 174-680h676q12.75 0 21.38 8.62Q880-662.75 880-650v340q0 12.75-8.62 21.37Q862.75-280 850-280H174Zm30-60h176v-280H204v280Z"/></symbol><symbol id="i-odometer" viewBox="0 -960 960 960"><path d="M473.5-303.5Q517-305 537-336l179-280q7-11-1.5-19.5T695-637L418-456q-30 20-32 64t21 67q23 23 66.5 21.5ZM478-799q45 0 94.5 12t97.5 39q11 7 15 19.31 4 12.31-4 23.5t-20.5 12.69Q648-691 636-697q-41-22-83.5-32T478-739q-140.48 0-239.24 100.22Q140-538.57 140-396.02 140-351 152.5-305q12.5 46 35.5 85h579q22-36 35-84t13-94q0-35-9-75.5T776-551q-7-11-5.5-24t12.5-20q10.64-8 23.32-4T825-583q23 45 35.5 89.5T875-404q2 60-12 113t-41 98q-12 23-25.5 28t-33.5 5H192q-17 0-33.5-8.5T134-193q-26-48-40-97.5T80-396q0-83 31.5-156.5t85.5-128Q251-735 323.68-767T478-799Zm-9 331Z"/></symbol><symbol id="i-door" viewBox="0 -960 960 960"><path d="M461.5-458.68q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68ZM260-120v-60l280-49v-466q0-14-7.5-24.5T512-732l-252-39v-59l266 46q32 5 53 29.9t21 58.1v466q0 21.66-14.18 38.46Q571.64-174.73 550-171l-290 51Zm0-60h440v-590H260v-1 591Zm-110 60q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h50v-590q0-24.75 17.63-42.38Q235.25-830 260-830h440q24.75 0 42.38 17.62Q760-794.75 760-770v590h50q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Z"/></symbol><symbol id="i-window" viewBox="0 -960 960 960"><path d="M220-120q-24.75 0-42.37-17.63Q160-155.25 160-180v-600q0-24.75 17.63-42.38Q195.25-840 220-840h520q24.75 0 42.38 17.62Q800-804.75 800-780v600q0 24.75-17.62 42.37Q764.75-120 740-120H220Zm0-390h220v-25q0-6 4.5-10.5T455-550h50q6 0 10.5 4.5T520-535v25h220v-270H220v270Zm0 330h520-520Z"/></symbol><symbol id="i-cabin" viewBox="0 -960 960 960"><path d="M373.5-163.5Q330-207 330-270H180q-24 0-42-18t-18-42q0-152 93.5-258T450-705v-105q0-13 8.5-21.5T480-840q13 0 21.5 8.5T510-810v105q143 11 236.5 117T840-330q0 24-18 42t-42 18H630q0 63-43.5 106.5T480-120q-63 0-106.5-43.5ZM180-330h600q0-132-87.5-223.5T480-645q-125 0-212.5 91.5T180-330Zm364 124q26-26 26-64H390q0 38 26 64t64 26q38 0 64-26Zm-64-64Z"/></symbol><symbol id="i-seat" viewBox="0 -960 960 960"><path d="M168.5-128.63Q160-137.25 160-150v-130q0-24.75 17.63-42.38Q195.25-340 220-340h520q24.75 0 42.38 17.62Q800-304.75 800-280v130q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63-8.5-8.62-8.5-21.37v-130H220v130q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM169.88-410q-20.88 0-35.38-14.62-14.5-14.62-14.5-35.5 0-20.88 14.62-35.38 14.62-14.5 35.5-14.5 20.88 0 35.38 14.62 14.5 14.62 14.5 35.5 0 20.88-14.62 35.38-14.62 14.5-35.5 14.5ZM280-400v-380q0-24.75 17.63-42.38Q315.25-840 340-840h280q24.75 0 42.38 17.62Q680-804.75 680-780v380H280Zm474.5-24.62q-14.5-14.62-14.5-35.5 0-20.88 14.62-35.38 14.62-14.5 35.5-14.5 20.88 0 35.38 14.62 14.5 14.62 14.5 35.5 0 20.88-14.62 35.38-14.62 14.5-35.5 14.5-20.88 0-35.38-14.62ZM340-460h280v-320H340v320Zm0 0h280-280Z"/></symbol><symbol id="i-oil" viewBox="0 -960 960 960"><path d="M160-120q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h40v-270h-50q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h50v-270h-40q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h640q12.75 0 21.38 8.62Q830-822.75 830-810q0 12-8.62 21-8.63 9-21.38 9h-40v270h50q12.75 0 21.38 8.62Q840-492.75 840-480q0 12-8.62 21-8.63 9-21.38 9h-50v270h40q12.75 0 21.38 8.62Q830-162.75 830-150q0 12-8.62 21-8.63 9-21.38 9H160Zm100-60h440v-270q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5v-270H260v270q12.75 0 21.38 8.62Q290-492.75 290-480q0 12-8.62 21-8.63 9-21.38 9v270Zm297.88-184.5Q590-396 590-440.74q0-18.26-4.5-31.26T569-502l-66-78q-9.06-11-23.03-11T457-580l-66 77q-12 17-16.5 30.28-4.5 13.29-4.5 31.61 0 44.89 32 76.5T479.88-333q45.88 0 78-31.5ZM260-180v-600 600Z"/></symbol><symbol id="i-fluid" viewBox="0 -960 960 960"><path d="M251.5-174Q160-268 160-408q0-64 29-127t72.5-121q43.5-58 94-108.5T450-854q7-6 14.5-8.5T480-865q8 0 15.5 2.5T510-854q44 39 94.5 89.5t94 108.5Q742-598 771-535t29 127q0 140-91.5 234T480-80q-137 0-228.5-94ZM666-216.5Q740-293 740-408q0-79-66.5-179.5T480-800Q353-688 286.5-587.5T220-408q0 115 74 191.5T480-140q112 0 186-76.5ZM480-480Zm-1 272q16 0 24.5-5.5T512-230q0-11-8.5-17t-25.5-6q-42 0-85.5-26.5T337-373q-2-9-9-14.5t-15-5.5q-11 0-17 8.5t-4 17.5q15 84 71 121.5T479-208Z"/></symbol><symbol id="i-warning" viewBox="0 -960 960 960"><path d="M92-120q-9 0-15.5-4T66-135q-4-7-4.5-14.5T66-165l388-670q5-8 11.5-11.5T480-850q8 0 14.5 3.5T506-835l388 670q5 8 4.5 15.5T894-135q-4 7-10.5 11t-15.5 4H92Zm52-60h672L480-760 144-180Zm361.5-65.5Q514-254 514-267t-8.5-21.5Q497-297 484-297t-21.5 8.5Q454-280 454-267t8.5 21.5Q471-237 484-237t21.5-8.5Zm0-111Q514-365 514-378v-164q0-13-8.5-21.5T484-572q-13 0-21.5 8.5T454-542v164q0 13 8.5 21.5T484-348q13 0 21.5-8.5ZM480-470Z"/></symbol><symbol id="i-tire" viewBox="0 -960 960 960"><path d="M733.5-674.5Q730-682 730-690q0-11 6.27-19.5T752.5-725q15.5-11 33.5-18t36-12q3-1 6-.5t4.71 2.21Q835-751 835-742q-5 18-12 36t-18 33.5q-7 9.96-15.5 16.23T770-650q-8 0-15.5-3.5T742-662q-5-5-8.5-12.5ZM140-120q-24.75 0-42.37-17.63Q80-155.25 80-180v-600q0-24.75 17.63-42.38Q115.25-840 140-840h270q24.75 0 42.38 17.62Q470-804.75 470-780v361q14-5 27-8t23.08-3q45.8 0 77.86 32.08Q630-365.83 630-320v85q0 20 17.5 37.5t38 17.5q20.5 0 37.5-17.5t17-37.5v-225h-40v-54q-54-23-87-69.78t-33-105.98q0-79.24 56-134.74Q692-880 770.5-880t134 55.6Q960-768.81 960-689.92 960-631 927-584t-87 70v54h-40v225q0 45-34.5 80t-80 35q-45.5 0-80.5-35t-35-80v-85q0-21.25-14.37-35.63Q541.25-370 520-370q-20 0-35 14.37-15 14.38-15 35.63v140q0 24.75-17.62 42.37Q434.75-120 410-120H140Zm629.88-440Q824-560 862-597.88q38-37.88 38-92T862.12-782q-37.88-38-92-38T678-782.12q-38 37.88-38 92T677.88-598q37.88 38 92 38ZM140-180h270v-124l-49 49q-10.58 11-22.29 9.5Q327-247 319-255t-9.5-20.17Q308-287.35 319-298l91-91v-115l-49 49q-10.58 11-22.29 9.5Q327-447 319-455t-9.5-20.17Q308-487.35 319-498l91-91v-125l-49 49q-10.58 11-22.29 9.5Q327-657 319-665t-9.5-20.17Q308-697.35 319-708l72-72H159l72 72q11 10.58 9.5 22.29Q239-674 231-666t-19.71 10q-11.71 2-22.29-9l-49-49v125l91 91q11 10.58 9.5 22.29Q239-464 231-456t-19.71 10q-11.71 2-22.29-9l-49-49v115l91 91q11 10.58 9.5 22.29Q239-264 231-256t-19.71 10q-11.71 2-22.29-9l-49-49v124Zm135-300Z"/></symbol><symbol id="i-car" viewBox="0 -960 960 960"><path d="M200-204v44q0 16.67-11.74 28.33Q176.53-120 159.76-120q-16.76 0-28.26-11.67Q120-143.33 120-160v-304q0-4.67.5-9.33.5-4.67 2.5-9.67l78-236q6-19 21.75-30T258-760h444q19.5 0 35.25 11T759-719l78 236q2 5 2.5 9.67.5 4.66.5 9.33v304q0 16.67-11.74 28.33Q816.53-120 799.76-120q-16.76 0-28.26-11.67Q760-143.33 760-160v-44H200Zm3-330h554l-55-166H258l-55 166Zm-23 60v210-210Zm105.76 160q23.24 0 38.74-15.75Q340-345.5 340-368q0-23.33-15.75-39.67Q308.5-424 286-424q-23.33 0-39.67 16.26Q230-391.47 230-368.24q0 23.24 16.26 38.74 16.27 15.5 39.5 15.5ZM675-314q23.33 0 39.67-15.75Q731-345.5 731-368q0-23.33-16.26-39.67Q698.47-424 675.24-424q-23.24 0-38.74 16.26-15.5 16.27-15.5 39.5 0 23.24 15.75 38.74Q652.5-314 675-314Zm-495 50h600v-210H180v210Z"/></symbol><symbol id="i-verified" viewBox="0 -960 960 960"><path d="m437-433-73-76q-9-10-22-10t-23 9q-10 10-10 23t10 23l97 96q9 9 21 9t21-9l183-182q9-9 9-22t-10-22q-9-8-21.5-7.5T598-593L437-433ZM332-84l-62-106-124-25q-11-2-18.5-12t-5.5-21l14-120-79-92q-8-8-8-20t8-20l79-91-14-120q-2-11 5.5-21t18.5-12l124-25 62-107q6-10 17-14t22 1l109 51 109-51q11-5 22-1.5t17 13.5l63 108 123 25q11 2 18.5 12t5.5 21l-14 120 79 91q8 8 8 20t-8 20l-79 92 14 120q2 11-5.5 21T814-215l-123 25-63 107q-6 10-17 13.5T589-71l-109-51-109 51q-11 5-22 1t-17-14Zm41-55 107-45 110 45 67-100 117-30-12-119 81-92-81-94 12-119-117-28-69-100-108 45-110-45-67 100-117 28 12 119-81 94 81 92-12 121 117 28 70 100Zm107-341Z"/></symbol><symbol id="i-share" viewBox="0 -960 960 960"><path d="M686-80q-47.5 0-80.75-33.25T572-194q0-8 5-34L278-403q-16.28 17.34-37.64 27.17Q219-366 194-366q-47.5 0-80.75-33T80-480q0-48 33.25-81T194-594q24 0 45 9.3 21 9.29 37 25.7l301-173q-2-8-3.5-16.5T572-766q0-47.5 33.25-80.75T686-880q47.5 0 80.75 33.25T800-766q0 47.5-33.25 80.75T686-652q-23.27 0-43.64-9Q622-670 606-685L302-516q3 8 4.5 17.5t1.5 18q0 8.5-1 16t-3 15.5l303 173q16-15 36.09-23.5 20.1-8.5 43.07-8.5Q734-308 767-274.75T800-194q0 47.5-33.25 80.75T686-80Zm.04-60q22.96 0 38.46-15.54 15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5Zm-492-286q22.96 0 38.46-15.54 15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5ZM724.5-727.54q15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5 22.96 0 38.46-15.54ZM686-194ZM194-480Zm492-286Z"/></symbol><symbol id="i-info" viewBox="0 -960 960 960"><path d="M504.5-288.63q8.5-8.62 8.5-21.37v-180q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v180q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63Zm-1-314.57q9.5-9.2 9.5-22.8 0-14.45-9.48-24.22-9.48-9.78-23.5-9.78t-23.52 9.78Q447-640.45 447-626q0 13.6 9.48 22.8 9.48 9.2 23.5 9.2t23.52-9.2ZM480.27-80q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></symbol><symbol id="i-error" viewBox="0 -960 960 960"><path d="M503.5-289.48q9.5-9.48 9.5-23.5t-9.48-23.52q-9.48-9.5-23.5-9.5t-23.52 9.48q-9.5 9.48-9.5 23.5t9.48 23.52q9.48 9.5 23.5 9.5t23.52-9.48Zm1-152.15q8.5-8.62 8.5-21.37v-193q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v193q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63ZM480.27-80q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></symbol><symbol id="i-lock" viewBox="0 -960 960 960"><path d="M220-80q-24.75 0-42.37-17.63Q160-115.25 160-140v-434q0-24.75 17.63-42.38Q195.25-634 220-634h70v-96q0-78.85 55.61-134.42Q401.21-920 480.11-920q78.89 0 134.39 55.58Q670-808.85 670-730v96h70q24.75 0 42.38 17.62Q800-598.75 800-574v434q0 24.75-17.62 42.37Q764.75-80 740-80H220Zm0-60h520v-434H220v434Zm314.5-162.03Q557-324.06 557-355q0-30-22.67-54.5t-54.5-24.5q-31.83 0-54.33 24.5t-22.5 55q0 30.5 22.67 52.5t54.5 22q31.83 0 54.33-22.03ZM350-634h260v-96q0-54.17-37.88-92.08-37.88-37.92-92-37.92T388-822.08q-38 37.91-38 92.08v96ZM220-140v-434 434Z"/></symbol><symbol id="i-headlamp" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M13.5,6.5C18,6.5 20.5,9 20.5,12C20.5,15 18,17.5 13.5,17.5Z M10,7.5L3.5,9.5M10,11L3.5,13M10,14.5L3.5,16.5"/></symbol><symbol id="i-position" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M10.5,8A4,4 0,0 0,10.5,16ZM13.5,8A4,4 0,0 1,13.5,16Z M5,8.5L2.5,7M4.5,12L2,12M5,15.5L2.5,17M19,8.5L21.5,7M19.5,12L22,12M19,15.5L21.5,17"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-fuel" viewBox="0 -960 960 960"><path d="M160-150v-630q0-24 18-42t42-18h269q24 0 42 18t18 42v288h65q20.63 0 35.31 14.69Q664-462.63 664-442v219q0 21.68 15.5 36.34Q695-172 717-172t37.5-14.66Q770-201.32 770-223v-295q-11 6-23 9t-24 3q-39.48 0-66.74-27.26Q629-560.52 629-600q0-31.61 18-56.81Q665-682 695-690l-77-77q-8-7.64-8-17.82t8-18.18q8-8 18-7.5t18 8.5l135 135q14 14 22.5 30.5T820-600v377q0 43.26-29.82 73.13-29.81 29.87-73 29.87Q674-120 644-149.87q-30-29.87-30-73.13v-219h-65v292q0 12.75-8.62 21.37Q531.75-120 519-120H190q-12.75 0-21.37-8.63Q160-137.25 160-150Zm60-402h269v-228H220v228Zm503-4q18 0 31-13t13-31q0-18-13-31t-31-13q-18 0-31 13t-13 31q0 18 13 31t31 13ZM220-180h269v-312H220v312Zm269 0H220h269Z"/></symbol><symbol id="i-battery" viewBox="0 -960 960 960"><path d="M174-280q-12.75 0-21.37-8.63Q144-297.25 144-310v-90h-34q-12.75 0-21.37-8.63Q80-417.25 80-430v-100q0-12.75 8.63-21.38Q97.25-560 110-560h34v-90q0-12.75 8.63-21.38Q161.25-680 174-680h676q12.75 0 21.38 8.62Q880-662.75 880-650v340q0 12.75-8.62 21.37Q862.75-280 850-280H174Zm30-60h176v-280H204v280Z"/></symbol><symbol id="i-odometer" viewBox="0 -960 960 960"><path d="M473.5-303.5Q517-305 537-336l179-280q7-11-1.5-19.5T695-637L418-456q-30 20-32 64t21 67q23 23 66.5 21.5ZM478-799q45 0 94.5 12t97.5 39q11 7 15 19.31 4 12.31-4 23.5t-20.5 12.69Q648-691 636-697q-41-22-83.5-32T478-739q-140.48 0-239.24 100.22Q140-538.57 140-396.02 140-351 152.5-305q12.5 46 35.5 85h579q22-36 35-84t13-94q0-35-9-75.5T776-551q-7-11-5.5-24t12.5-20q10.64-8 23.32-4T825-583q23 45 35.5 89.5T875-404q2 60-12 113t-41 98q-12 23-25.5 28t-33.5 5H192q-17 0-33.5-8.5T134-193q-26-48-40-97.5T80-396q0-83 31.5-156.5t85.5-128Q251-735 323.68-767T478-799Zm-9 331Z"/></symbol><symbol id="i-door" viewBox="0 -960 960 960"><path d="M461.5-458.68q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68ZM260-120v-60l280-49v-466q0-14-7.5-24.5T512-732l-252-39v-59l266 46q32 5 53 29.9t21 58.1v466q0 21.66-14.18 38.46Q571.64-174.73 550-171l-290 51Zm0-60h440v-590H260v-1 591Zm-110 60q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h50v-590q0-24.75 17.63-42.38Q235.25-830 260-830h440q24.75 0 42.38 17.62Q760-794.75 760-770v590h50q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Z"/></symbol><symbol id="i-window" viewBox="0 -960 960 960"><path d="M220-120q-24.75 0-42.37-17.63Q160-155.25 160-180v-600q0-24.75 17.63-42.38Q195.25-840 220-840h520q24.75 0 42.38 17.62Q800-804.75 800-780v600q0 24.75-17.62 42.37Q764.75-120 740-120H220Zm0-390h220v-25q0-6 4.5-10.5T455-550h50q6 0 10.5 4.5T520-535v25h220v-270H220v270Zm0 330h520-520Z"/></symbol><symbol id="i-cabin" viewBox="0 -960 960 960"><path d="M373.5-163.5Q330-207 330-270H180q-24 0-42-18t-18-42q0-152 93.5-258T450-705v-105q0-13 8.5-21.5T480-840q13 0 21.5 8.5T510-810v105q143 11 236.5 117T840-330q0 24-18 42t-42 18H630q0 63-43.5 106.5T480-120q-63 0-106.5-43.5ZM180-330h600q0-132-87.5-223.5T480-645q-125 0-212.5 91.5T180-330Zm364 124q26-26 26-64H390q0 38 26 64t64 26q38 0 64-26Zm-64-64Z"/></symbol><symbol id="i-seat" viewBox="0 -960 960 960"><path d="M168.5-128.63Q160-137.25 160-150v-130q0-24.75 17.63-42.38Q195.25-340 220-340h520q24.75 0 42.38 17.62Q800-304.75 800-280v130q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63-8.5-8.62-8.5-21.37v-130H220v130q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM169.88-410q-20.88 0-35.38-14.62-14.5-14.62-14.5-35.5 0-20.88 14.62-35.38 14.62-14.5 35.5-14.5 20.88 0 35.38 14.62 14.5 14.62 14.5 35.5 0 20.88-14.62 35.38-14.62 14.5-35.5 14.5ZM280-400v-380q0-24.75 17.63-42.38Q315.25-840 340-840h280q24.75 0 42.38 17.62Q680-804.75 680-780v380H280Zm474.5-24.62q-14.5-14.62-14.5-35.5 0-20.88 14.62-35.38 14.62-14.5 35.5-14.5 20.88 0 35.38 14.62 14.5 14.62 14.5 35.5 0 20.88-14.62 35.38-14.62 14.5-35.5 14.5-20.88 0-35.38-14.62ZM340-460h280v-320H340v320Zm0 0h280-280Z"/></symbol><symbol id="i-oil" viewBox="0 -960 960 960"><path d="M160-120q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h40v-270h-50q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h50v-270h-40q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5h640q12.75 0 21.38 8.62Q830-822.75 830-810q0 12-8.62 21-8.63 9-21.38 9h-40v270h50q12.75 0 21.38 8.62Q840-492.75 840-480q0 12-8.62 21-8.63 9-21.38 9h-50v270h40q12.75 0 21.38 8.62Q830-162.75 830-150q0 12-8.62 21-8.63 9-21.38 9H160Zm100-60h440v-270q-12 0-21-9t-9-21.5q0-12.5 9-21t21-8.5v-270H260v270q12.75 0 21.38 8.62Q290-492.75 290-480q0 12-8.62 21-8.63 9-21.38 9v270Zm297.88-184.5Q590-396 590-440.74q0-18.26-4.5-31.26T569-502l-66-78q-9.06-11-23.03-11T457-580l-66 77q-12 17-16.5 30.28-4.5 13.29-4.5 31.61 0 44.89 32 76.5T479.88-333q45.88 0 78-31.5ZM260-180v-600 600Z"/></symbol><symbol id="i-fluid" viewBox="0 -960 960 960"><path d="M251.5-174Q160-268 160-408q0-64 29-127t72.5-121q43.5-58 94-108.5T450-854q7-6 14.5-8.5T480-865q8 0 15.5 2.5T510-854q44 39 94.5 89.5t94 108.5Q742-598 771-535t29 127q0 140-91.5 234T480-80q-137 0-228.5-94ZM666-216.5Q740-293 740-408q0-79-66.5-179.5T480-800Q353-688 286.5-587.5T220-408q0 115 74 191.5T480-140q112 0 186-76.5ZM480-480Zm-1 272q16 0 24.5-5.5T512-230q0-11-8.5-17t-25.5-6q-42 0-85.5-26.5T337-373q-2-9-9-14.5t-15-5.5q-11 0-17 8.5t-4 17.5q15 84 71 121.5T479-208Z"/></symbol><symbol id="i-warning" viewBox="0 -960 960 960"><path d="M92-120q-9 0-15.5-4T66-135q-4-7-4.5-14.5T66-165l388-670q5-8 11.5-11.5T480-850q8 0 14.5 3.5T506-835l388 670q5 8 4.5 15.5T894-135q-4 7-10.5 11t-15.5 4H92Zm52-60h672L480-760 144-180Zm361.5-65.5Q514-254 514-267t-8.5-21.5Q497-297 484-297t-21.5 8.5Q454-280 454-267t8.5 21.5Q471-237 484-237t21.5-8.5Zm0-111Q514-365 514-378v-164q0-13-8.5-21.5T484-572q-13 0-21.5 8.5T454-542v164q0 13 8.5 21.5T484-348q13 0 21.5-8.5ZM480-470Z"/></symbol><symbol id="i-tire" viewBox="0 -960 960 960"><path d="M733.5-674.5Q730-682 730-690q0-11 6.27-19.5T752.5-725q15.5-11 33.5-18t36-12q3-1 6-.5t4.71 2.21Q835-751 835-742q-5 18-12 36t-18 33.5q-7 9.96-15.5 16.23T770-650q-8 0-15.5-3.5T742-662q-5-5-8.5-12.5ZM140-120q-24.75 0-42.37-17.63Q80-155.25 80-180v-600q0-24.75 17.63-42.38Q115.25-840 140-840h270q24.75 0 42.38 17.62Q470-804.75 470-780v361q14-5 27-8t23.08-3q45.8 0 77.86 32.08Q630-365.83 630-320v85q0 20 17.5 37.5t38 17.5q20.5 0 37.5-17.5t17-37.5v-225h-40v-54q-54-23-87-69.78t-33-105.98q0-79.24 56-134.74Q692-880 770.5-880t134 55.6Q960-768.81 960-689.92 960-631 927-584t-87 70v54h-40v225q0 45-34.5 80t-80 35q-45.5 0-80.5-35t-35-80v-85q0-21.25-14.37-35.63Q541.25-370 520-370q-20 0-35 14.37-15 14.38-15 35.63v140q0 24.75-17.62 42.37Q434.75-120 410-120H140Zm629.88-440Q824-560 862-597.88q38-37.88 38-92T862.12-782q-37.88-38-92-38T678-782.12q-38 37.88-38 92T677.88-598q37.88 38 92 38ZM140-180h270v-124l-49 49q-10.58 11-22.29 9.5Q327-247 319-255t-9.5-20.17Q308-287.35 319-298l91-91v-115l-49 49q-10.58 11-22.29 9.5Q327-447 319-455t-9.5-20.17Q308-487.35 319-498l91-91v-125l-49 49q-10.58 11-22.29 9.5Q327-657 319-665t-9.5-20.17Q308-697.35 319-708l72-72H159l72 72q11 10.58 9.5 22.29Q239-674 231-666t-19.71 10q-11.71 2-22.29-9l-49-49v125l91 91q11 10.58 9.5 22.29Q239-464 231-456t-19.71 10q-11.71 2-22.29-9l-49-49v115l91 91q11 10.58 9.5 22.29Q239-264 231-256t-19.71 10q-11.71 2-22.29-9l-49-49v124Zm135-300Z"/></symbol><symbol id="i-car" viewBox="0 -960 960 960"><path d="M200-204v44q0 16.67-11.74 28.33Q176.53-120 159.76-120q-16.76 0-28.26-11.67Q120-143.33 120-160v-304q0-4.67.5-9.33.5-4.67 2.5-9.67l78-236q6-19 21.75-30T258-760h444q19.5 0 35.25 11T759-719l78 236q2 5 2.5 9.67.5 4.66.5 9.33v304q0 16.67-11.74 28.33Q816.53-120 799.76-120q-16.76 0-28.26-11.67Q760-143.33 760-160v-44H200Zm3-330h554l-55-166H258l-55 166Zm-23 60v210-210Zm105.76 160q23.24 0 38.74-15.75Q340-345.5 340-368q0-23.33-15.75-39.67Q308.5-424 286-424q-23.33 0-39.67 16.26Q230-391.47 230-368.24q0 23.24 16.26 38.74 16.27 15.5 39.5 15.5ZM675-314q23.33 0 39.67-15.75Q731-345.5 731-368q0-23.33-16.26-39.67Q698.47-424 675.24-424q-23.24 0-38.74 16.26-15.5 16.27-15.5 39.5 0 23.24 15.75 38.74Q652.5-314 675-314Zm-495 50h600v-210H180v210Z"/></symbol><symbol id="i-share" viewBox="0 -960 960 960"><path d="M686-80q-47.5 0-80.75-33.25T572-194q0-8 5-34L278-403q-16.28 17.34-37.64 27.17Q219-366 194-366q-47.5 0-80.75-33T80-480q0-48 33.25-81T194-594q24 0 45 9.3 21 9.29 37 25.7l301-173q-2-8-3.5-16.5T572-766q0-47.5 33.25-80.75T686-880q47.5 0 80.75 33.25T800-766q0 47.5-33.25 80.75T686-652q-23.27 0-43.64-9Q622-670 606-685L302-516q3 8 4.5 17.5t1.5 18q0 8.5-1 16t-3 15.5l303 173q16-15 36.09-23.5 20.1-8.5 43.07-8.5Q734-308 767-274.75T800-194q0 47.5-33.25 80.75T686-80Zm.04-60q22.96 0 38.46-15.54 15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5Zm-492-286q22.96 0 38.46-15.54 15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5ZM724.5-727.54q15.5-15.53 15.5-38.5 0-22.96-15.54-38.46-15.53-15.5-38.5-15.5-22.96 0-38.46 15.54-15.5 15.53-15.5 38.5 0 22.96 15.54 38.46 15.53 15.5 38.5 15.5 22.96 0 38.46-15.54ZM686-194ZM194-480Zm492-286Z"/></symbol><symbol id="i-info" viewBox="0 -960 960 960"><path d="M504.5-288.63q8.5-8.62 8.5-21.37v-180q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v180q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63Zm-1-314.57q9.5-9.2 9.5-22.8 0-14.45-9.48-24.22-9.48-9.78-23.5-9.78t-23.52 9.78Q447-640.45 447-626q0 13.6 9.48 22.8 9.48 9.2 23.5 9.2t23.52-9.2ZM480.27-80q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></symbol><symbol id="i-error" viewBox="0 -960 960 960"><path d="M503.5-289.48q9.5-9.48 9.5-23.5t-9.48-23.52q-9.48-9.5-23.5-9.5t-23.52 9.48q-9.5 9.48-9.5 23.5t9.48 23.52q9.48 9.5 23.5 9.5t23.52-9.48Zm1-152.15q8.5-8.62 8.5-21.37v-193q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v193q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63ZM480.27-80q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.23-60Q622-140 721-239.5t99-241Q820-622 721.19-721T480-820q-141 0-240.5 98.81T140-480q0 141 99.5 240.5t241 99.5Zm-.5-340Z"/></symbol><symbol id="i-lock" viewBox="0 -960 960 960"><path d="M220-80q-24.75 0-42.37-17.63Q160-115.25 160-140v-434q0-24.75 17.63-42.38Q195.25-634 220-634h70v-96q0-78.85 55.61-134.42Q401.21-920 480.11-920q78.89 0 134.39 55.58Q670-808.85 670-730v96h70q24.75 0 42.38 17.62Q800-598.75 800-574v434q0 24.75-17.62 42.37Q764.75-80 740-80H220Zm0-60h520v-434H220v434Zm314.5-162.03Q557-324.06 557-355q0-30-22.67-54.5t-54.5-24.5q-31.83 0-54.33 24.5t-22.5 55q0 30.5 22.67 52.5t54.5 22q31.83 0 54.33-22.03ZM350-634h260v-96q0-54.17-37.88-92.08-37.88-37.92-92-37.92T388-822.08q-38 37.91-38 92.08v96ZM220-140v-434 434Z"/></symbol><symbol id="i-headlamp" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M13.5,6.5C18,6.5 20.5,9 20.5,12C20.5,15 18,17.5 13.5,17.5Z M10,7.5L3.5,9.5M10,11L3.5,13M10,14.5L3.5,16.5"/></symbol><symbol id="i-position" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M10.5,8A4,4 0,0 0,10.5,16ZM13.5,8A4,4 0,0 1,13.5,16Z M5,8.5L2.5,7M4.5,12L2,12M5,15.5L2.5,17M19,8.5L21.5,7M19.5,12L22,12M19,15.5L21.5,17"/></symbol><symbol id="i-copy" viewBox="0 -960 960 960"><path d="M300-200q-24 0-42-18t-18-42v-560q0-24 18-42t42-18h440q24 0 42 18t18 42v560q0 24-18 42t-42 18H300Zm0-60h440v-560H300v560ZM180-80q-24 0-42-18t-18-42v-590q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v590h470q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32Q662.75-80 650-80H180Zm120-180v-560 560Z"/></symbol><symbol id="i-check" viewBox="0 -960 960 960"><path d="m378-332 363-363q9-9 21.5-9t21.5 9q9 9 9 21.5t-9 21.5L399-267q-9 9-21 9t-21-9L175-449q-9-9-8.5-21.5T176-492q9-9 21.5-9t21.5 9l159 160Z"/></symbol><symbol id="i-gap" viewBox="0 -960 960 960"><path d="M477-780q-37 0-72 10t-67 27q-11 6-23 3.5T296-753q-7-11-5-23t13-18q39-23 83-34.5t90-11.5q75 0 141 28t115.5 76.5Q783-687 811.5-622T840-482q0 51-13.5 98T788-295q-6 10-17.5 10t-20.5-8q-9-9-11.5-21t3.5-23q18-33 28-70t10-78q0-124-89-209.5T477-780Zm25.5 105.5Q511-666 511-653v50q0 13-8.5 21.5T481-573q-13 0-21.5-8.5T451-603v-50q0-13 8.5-21.5T481-683q13 0 21.5 8.5ZM477-120q-75 0-139.5-28.5T224-226q-44-45-71-102t-32-123q-1-13 7.5-21.5T150-481q13 0 21 8.5t10 21.5q5 54 28 100.5t58 82.5q41 41 94.5 64.5T477-180q46 0 87.5-13t76.5-36L263-607h-91q-13 0-21.5-8.5T142-637v-91l-58-58q-9-9-9-21.5t9-21.5q9-9 21.5-9t21.5 9l709 709q9 9 8.5 21T835-78q-9 9-21.5 9T792-78L685-185q-45 31-97.5 48T477-120Z"/></symbol><symbol id="i-shield" viewBox="0 -960 960 960"><path d="m439-433-79-79q-9-9-22-9t-22 9q-9 9-9 21.83 0 12.84 9 22.17l99 100q9 9 21 9t21-9l186-186q9-9.07 9-21.53 0-12.47-8.5-20.47-8.5-8-21.5-7.5t-21 8.5L439-433Zm31.12 348q-4.56-1-9.12-3-139-47-220-168.5t-81-266.61V-719q0-19.26 10.88-34.66Q181.75-769.07 199-776l260-97q11-4 21-4t21 4l260 97q17.25 6.93 28.13 22.34Q800-738.26 800-719v195.89Q800-378 719-256.5T499-88q-4.56 2-9.12 3T480-84q-5.32 0-9.88-1Zm9.88-58q115-38 187.5-143.5T740-523v-196l-260-98-260 98v196q0 131 72.5 236.5T480-143Zm0-337Z"/></symbol><symbol id="i-download" viewBox="0 -960 960 960"><path d="M469-327q-5-2-10-7L308-485q-9-9.27-8.5-21.64.5-12.36 9.11-21.36 9.39-9 21.89-9t21.5 9l98 99v-341q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v341l99-99q8.8-9 20.9-8.5 12.1.5 21.49 9.5 8.61 9 8.61 21.5t-9 21.5L501-334q-5 5-10.13 7-5.14 2-11 2-5.87 0-10.87-2ZM220-160q-24 0-42-18t-18-42v-113q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v113h520v-113q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v113q0 24-18 42t-42 18H220Z"/></symbol></svg>
 <main>
-  <div class="top"><span class="brand">차곡</span><span id="demo"></span></div>
+  <div class="top"><span class="brand">차곡</span><span class="doc" id="doc"></span><span id="demo"></span></div>
   <div id="view" aria-live="polite"><div class="state"><p>기록을 여는 중입니다…</p></div></div>
   <noscript><div class="state error"><p>자바스크립트를 켜야 기록을 열 수 있습니다.</p></div></noscript>
-  <footer><svg class="ic"><use href="#i-lock"/></svg><span>이 페이지는 링크 안에 담긴 기록을 휴대폰에서만 풀어 보여 줍니다. 기록은 서버로 보내지지 않습니다. 무결성 값이 차 화면의 값과 같으면 같은 기록입니다.</span></footer>
+  <footer><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg><span>이 페이지는 링크 안에 담긴 기록을 휴대폰에서만 풀어 보여 줍니다. 기록은 서버로 보내지지 않습니다.</span></footer>
 </main>
 <script>
 (function () {
   var LABELS = {
     fuelPercent: '연료', evSocPercent: '배터리', evCharging: '충전', odometerKm: '주행거리', tripSinceRefillKm: '주유 후 주행거리',
-    doorsOpen: '문', windowsOpen: '창문', headlightsOn: '전조등', tailLampOn: '미등', cabinLightOn: '실내등',
+    doorsOpen: '문', windowsOpen: '창문', trunkOpen: '트렁크', chargePortOpen: '충전구', headlightsOn: '전조등', tailLampOn: '미등', cabinLightOn: '실내등',
     engineOil: '엔진오일', brakeFluid: '브레이크액', washerFluid: '워셔액', telltales: '경고등', tires: '타이어', airbagsDeployed: '에어백'
   };
   // report/2부터 리포트 줄에 이름(label)이 없어 항목 키로 이름을 붙인다(:core StateItem과 같은 표).
   var NAMES = Object.assign({ doorsLocked: '문 잠금', parkingBrakeEngaged: '주차 브레이크', seatsOccupied: '좌석' }, LABELS);
   function nameOf(key) { return NAMES[key] || key; }
+  function keyOf(name) { return Object.keys(NAMES).filter(function (k) { return NAMES[k] === name; })[0]; }
   // 차 화면과 같은 아이콘(Material Symbols, Apache License 2.0)
   var ICONS = {
-    fuelPercent: 'fuel', tripSinceRefillKm: 'fuel', evSocPercent: 'battery', evCharging: 'battery', odometerKm: 'odometer',
+    fuelPercent: 'fuel', tripSinceRefillKm: 'fuel', evSocPercent: 'battery', evCharging: 'battery', chargePortOpen: 'battery', odometerKm: 'odometer',
     doorsOpen: 'door', doorsLocked: 'door', windowsOpen: 'window', headlightsOn: 'headlamp', tailLampOn: 'position', cabinLightOn: 'cabin',
     seatsOccupied: 'seat', engineOil: 'oil', brakeFluid: 'fluid', washerFluid: 'fluid', telltales: 'warning', tires: 'tire',
     airbagsDeployed: 'car', parkingBrakeEngaged: 'car'
   };
   var AREAS = { FRONT_LEFT: '운전석', FRONT_RIGHT: '조수석', REAR_LEFT: '뒷좌석 왼쪽', REAR_CENTER: '뒷좌석 가운데', REAR_RIGHT: '뒷좌석 오른쪽' };
   var SIDES = { FRONT_LEFT: '앞 왼쪽', FRONT_RIGHT: '앞 오른쪽', REAR_LEFT: '뒤 왼쪽', REAR_CENTER: '뒤 가운데', REAR_RIGHT: '뒤 오른쪽' };
-  var ORDER = ['NEEDS_CHECK', 'NOTE', 'UNCHANGED', 'UNKNOWN'];
-  var VERDICTS = { NEEDS_CHECK: '확인 필요', NOTE: '참고', UNCHANGED: '변화 없음', UNKNOWN: '확인 불가' };
+  // SHIELD는 notes가 모두 '(인수 때부터)'인 참고 줄이다. 데이터의 분류가 아니라 이 페이지가 나눠 보여 주는 칸이다.
+  var ORDER = ['NEEDS_CHECK', 'SHIELD', 'NOTE', 'UNCHANGED', 'UNKNOWN'];
+  var VERDICTS = { NEEDS_CHECK: '확인 필요', SHIELD: '인수 때부터', NOTE: '참고', UNCHANGED: '변화 없음', UNKNOWN: '확인 불가' };
   var DISCLAIMER = '\'확인 필요\'는 업체가 직접 볼 항목이며, 고객 책임이라는 뜻이 아닙니다.';
+  // 코드가 보여 주는 것만 적는다. 링크에는 비교할 값이 따로 없어, 페이지 혼자서는 '맞다'고 말할 수 없다. 맞춰 보는 쪽은 사람이다. 서명도 아니다.
+  var CODE_FULL = ['이 링크의 내용으로 이 휴대폰에서 다시 계산한 코드입니다.', '차 화면이나 업체 기록의 코드와 같으면 같은 내용이라는 뜻입니다. 내용을 맞춰 보는 값이며, 서명은 아닙니다.'];
+  var CODE_SUMMARY = ['이 링크는 QR에 담으려고 줄인 요약본입니다(변화 없는 항목의 값, 대여 중 기록 등). 이 코드는 차에 보관된 전체 기록의 코드이며, 여기서 다시 계산하지 않았습니다.', '차 화면이나 업체 기록의 코드와 맞춰 볼 때 씁니다. 서명은 아닙니다.'];
+  var CODE_IMAGE = '차 화면이나 업체 기록의 코드와 맞춰 볼 때 씁니다. 서명은 아닙니다.';
+  var LEDGER_KEY = 'chagok.ops.v1';
+  var SHIELD_MARK = /\s*\(인수 때부터\)/;
+  // 평소 값. 이 밖의 값은 '변화 없음' 칩에 함께 적는다(연료 82%, 앞 왼쪽 저압).
+  var USUAL = ['없음', '정상', '모두 닫힘', '닫힘', '꺼짐', '저압 없음', '전개 없음'];
+  var ENERGY = ['fuelPercent', 'evSocPercent'];
   var view = document.getElementById('view');
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
   function icon(name) { return '<svg class="ic" aria-hidden="true"><use href="#i-' + name + '"/></svg>'; }
   function iconFor(key) { return icon(ICONS[key] || 'car'); }
-  var DAY = { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
-  function time(iso, opts) {
-    try { return new Intl.DateTimeFormat('ko-KR', opts || DAY).format(new Date(iso)).replace(/\.\s?/g, '.').replace(/\.(\d{2}:)/, ' $1'); }
-    catch (e) { return iso; }
+  // *로 감싼 부분이 강조다. 화면에서는 굵게, 문구와 이미지에서는 별표만 뺀다.
+  function emphasis(s) { return String(s).split('*').map(function (part, i) { return i % 2 ? '<b class="num">' + esc(part) + '</b>' : esc(part); }).join(''); }
+  function bare(s) { return String(s).replace(/\*/g, ''); }
+  function some(list, limit) { return list.length > limit ? list.slice(0, limit).join(', ') + ' 외 ' + (list.length - limit) + '건' : list.join(', '); }
+
+  // 시각은 어느 나라에서 열어도 서울 시간으로 쓴다.
+  var SEOUL = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  function when(iso) {
+    var date = new Date(iso);
+    if (isNaN(date)) return null;
+    var p = {};
+    SEOUL.formatToParts(date).forEach(function (x) { p[x.type] = x.value; });
+    return { ymd: p.year + '.' + p.month + '.' + p.day, md: p.month + '.' + p.day, hm: p.hour + ':' + p.minute };
   }
-  function sameDay(a, b) {
-    var f = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' });
-    return f.format(new Date(a)) === f.format(new Date(b));
+  function stamp(iso) { var w = when(iso); return w ? w.md + ' ' + w.hm : String(iso == null ? '' : iso); }
+  function fullStamp(iso) { var w = when(iso); return w ? w.ymd + ' ' + w.hm : String(iso == null ? '' : iso); }
+  // b가 a와 같은 날이면 시각만, 아니면 날짜까지 쓴다.
+  function endOf(a, b) { var x = when(a), y = when(b); return x && y && x.ymd === y.ymd ? y.hm : stamp(b); }
+  function span(a, b) {
+    // 화면에 보이는 시각(분까지)끼리 뺀 값이라 눈으로 계산해도 맞는다.
+    var minutes = Math.floor(new Date(b) / 60000) - Math.floor(new Date(a) / 60000);
+    if (!(minutes >= 1)) return '';
+    var d = Math.floor(minutes / 1440), h = Math.floor(minutes / 60) % 24, m = minutes % 60;
+    return [d && d + '일', h && h + '시간', m && m + '분'].filter(Boolean).join(' ');
   }
-  function clock(iso) { return new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso)); }
+  // 1분이 안 되는 구간은 '12:40 → 12:40'처럼 같은 시각을 두 번 쓰지 않고 시각 하나에 '1분 미만'을 붙인다.
+  function underMinute(a, b) { var ms = new Date(b) - new Date(a); return ms >= 0 && ms < 60000; }
+
   function fail(msg) { view.innerHTML = '<div class="state error" role="alert">' + icon('error') + '<p>' + esc(msg) + '</p></div>'; }
   function bytes(b64url) {
     var b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -179,8 +273,14 @@ footer .ic{width:18px;height:18px;margin-top:2px}
       return 'sha256:' + Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
     });
   }
-  function short(hash) { var h = hash.replace('sha256:', '').slice(0, 8); return h.slice(0, 4) + ' ' + h.slice(4); }
-  function percent(s) { var m = /^(\d+)%$/.exec(s || ''); return m ? +m[1] : null; }
+  function short(hash) { var h = String(hash).replace('sha256:', '').slice(0, 8); return h.slice(0, 4) + ' ' + h.slice(4); }
+  function percent(s) { var m = /^(\d+)%$/.exec(s || ''); return m ? Math.min(+m[1], 100) : null; }
+  // 차대번호는 끝 6자리만 보여 준다(:core Vin과 같다). 업체 등록 번호는 그대로 보여 주고, 차대번호를 못 읽어 대신했다고 근거에 적는다.
+  function vehicleOf(id) { return /^[A-HJ-NPR-Z0-9]{17}$/.test(id) ? '…' + String(id).slice(-6) : id; }
+  function vehicleNote(json) { return json.noVin ? '차대번호를 읽지 못해 업체 등록 번호로 기록' : ''; }
+  // 실차 값이 아니면 표시한다. 시나리오가 섞였거나(demo), Virtual Console로 주입한 에뮬레이터 값이다(source).
+  // 반납 목록의 '시연용 예시'는 차에서 나온 기록이 아니므로 맨 먼저 표시한다.
+  function markOf(json) { return json.sample ? '예시' : json.demo ? '시연 모드' : json.source === 'emulator' ? '에뮬레이터 값' : ''; }
 
   function reading(key, r) {
     if (r.status === 'UNSUPPORTED') return '이 차에서 지원 안 함';
@@ -190,141 +290,572 @@ footer .ic{width:18px;height:18px;margin-top:2px}
     if (key === 'odometerKm') return Math.round(v).toLocaleString('ko-KR') + 'km';
     if (key === 'tripSinceRefillKm') return Math.round(v * 10) / 10 + 'km';
     if (key === 'evCharging') return v ? '충전 중' : '충전 안 함';
+    if (key === 'trunkOpen' || key === 'chargePortOpen') return v ? '열림' : '닫힘';
     if (typeof v === 'boolean') return v ? '켜짐' : '꺼짐';
     if (v === 'NORMAL') return '정상';
     if (v === 'LOW') return '부족';
     if (key === 'telltales') return v.length ? v.map(function (t) { return t.label; }).join(', ') : '없음';
     if (key === 'tires') {
       var low = Object.keys(v).filter(function (a) { return v[a].low; });
-      return low.length ? low.map(function (a) { return SIDES[a] + ' 저압'; }).join(', ') : '저압 없음';
+      if (low.length) return low.map(function (a) { return SIDES[a] + ' 저압'; }).join(', ');
+      return Object.keys(v).every(function (a) { return v[a].low === false; }) ? '저압 없음' : '저압 확인 못 함';
     }
     var on = Object.keys(v).filter(function (a) { return v[a]; });
     var word = key === 'airbagsDeployed' ? ['전개', '전개 없음'] : ['열림', '모두 닫힘'];
     return on.length ? on.map(function (a) { return AREAS[a]; }).join(', ') + ' ' + word[0] : word[1];
   }
 
-  // 인수 때부터 있던 것(켜진 경고등, 부족한 소모품, 저압 타이어)은 주황으로 표시해 고객의 근거가 되게 한다.
-  function attention(key, r) {
+  // 인수 때 이미 있던 것(켜진 경고등, 부족한 소모품, 저압 타이어, 전개된 에어백)은 고객을 보호하는 사실이다.
+  function already(key, r) {
     if (r.status !== 'OK') return false;
     var v = r.value;
     if (key === 'telltales') return v.length > 0;
     if (v === 'LOW') return true;
     if (key === 'tires') return Object.keys(v).some(function (a) { return v[a].low; });
+    if (key === 'airbagsDeployed') return Object.keys(v).some(function (a) { return v[a]; });
     return false;
   }
 
-  function seal(hash, sub) {
-    return '<div class="seal">' +
-      '<div class="seal-head">' + icon('verified') + '<span>무결성</span></div>' +
-      '<strong class="seal-value num">' + esc(short(hash)) + '</strong>' +
-      '<p>' + esc(sub) + '</p>' +
-      '<button type="button" class="keep" id="keep">' + icon('share') + '<span>링크 보관하기</span></button>' +
-      '<p class="keep-done" id="keep-done" role="status"></p>' +
-      '</div>';
+  function hero(m) {
+    return '<h1>' + m.lead.map(function (l) { return '<span class="l' + (l.warn ? ' warn' : '') + '">' + emphasis(l.text) + '</span>'; }).join('') + '</h1>' +
+      (m.basis ? '<p class="basis num">' + esc(m.basis) + '</p>' : '') +
+      (m.status.length ? '<ul class="status">' + m.status.map(function (s) {
+        return '<li class="' + s.tone + '">' + icon(s.icon) + '<span>' + (s.head ? '<b class="num">' + esc(s.head) + '</b>' : '') + esc(s.text) + '</span></li>';
+      }).join('') + '</ul>' : '') +
+      (m.disclaimer ? '<p class="note">' + icon('info') + '<span>' + esc(DISCLAIMER) + '</span></p>' : '') +
+      '<div class="meta"><p>기록 번호 <b class="num">' + esc(m.no) + '</b> · 차량 ' + esc(m.vehicle) + '</p><p class="num">' + esc(m.period) + '</p></div>';
   }
 
-  function heading(title, meta, period) {
-    return '<h1>' + esc(title) + '</h1><p class="meta">' + meta + '</p>' + (period ? '<p class="meta num">' + esc(period) + '</p>' : '');
+  // 문자로 답장할 문구. 사실만 쓴다(core Wording의 금지어를 쓰지 않는다). 링크는 맨 뒤에 둔다.
+  function message(m) {
+    return (m.mark ? '[' + m.mark + '] ' : '') + m.opener + ' ' + m.no + ', 코드 ' + m.code +
+      (m.facts.length ? ' 기준 ' + m.facts.join(', ') + '입니다.' : '입니다.') +
+      (m.shields.length ? ' ' + m.shieldWord + ': ' + some(m.shields.map(function (s) { return s.replace(/: (.+)$/, '($1)'); }), 3) + '.' : '');
   }
 
-  function renderSnapshot(json, hash) {
-    var facts = Object.keys(LABELS).filter(function (k) { return json.readings[k] && json.readings[k].status !== 'UNSUPPORTED'; }).map(function (k) {
-      var r = json.readings[k];
-      var cls = r.status !== 'OK' ? 'dim' : attention(k, r) ? 'warn' : '';
-      return '<div class="fact ' + cls + '"><span class="fact-label">' + iconFor(k) + esc(LABELS[k]) + '</span>' +
-        '<span class="fact-value num">' + esc(reading(k, r)) + '</span></div>';
-    }).join('');
-    view.innerHTML =
-      heading((json.kind === 'RETURN' ? '반납' : '인수') + ' 기록', '기록 번호 <b class="num">' + esc(json.recordNo) + '</b> · 차량 ' + esc(json.vehicleId), time(json.capturedAt)) +
-      seal(hash, '차 화면에 보이는 값과 같으면 같은 기록입니다.') +
-      '<div class="facts">' + facts + '</div>';
+  function actions(m) {
+    var link = location.href;
+    return '<section class="act"><h2>업체에 보낼 문구</h2>' +
+      '<p class="hint">업체에서 연락이 오면 답장에 그대로 붙여 넣으세요.</p>' +
+      '<p class="quote num">' + esc(message(m)) + ' 링크: <span class="link">' + esc(link.replace(/#.*$/, '#…')) + '</span></p>' +
+      '<button type="button" class="btn primary" id="copy-text">' + icon('copy') + '<span>문구 복사</span></button>' +
+      '<p class="done" id="copy-text-done" role="status"></p>' +
+      '<textarea class="manual" id="copy-text-manual" rows="6" readonly hidden aria-label="복사할 문구"></textarea></section>' +
+      '<section class="act"><h2>직접 다시 열려면 이 링크가 필요합니다</h2>' +
+      '<p class="hint">같은 기록이 차에 180일 보관된 뒤 지워지고, 그동안에도 직원만 열 수 있습니다. 서버에는 저장되지 않아, 보관하지 않으면 이 휴대폰의 방문 기록에만 남습니다.</p>' +
+      '<button type="button" class="btn primary" id="keep">' + icon('share') + '<span>링크 보관하기</span></button>' +
+      '<div class="pair">' +
+      (navigator.share ? '<button type="button" class="btn quiet" id="copy-link">' + icon('copy') + '<span>링크 복사</span></button>' : '') +
+      '<button type="button" class="btn quiet" id="save-image">' + icon('download') + '<span>이미지로 저장</span></button></div>' +
+      '<p class="done" id="keep-done" role="status"></p>' +
+      '<textarea class="manual" id="keep-manual" rows="4" readonly hidden aria-label="복사할 링크"></textarea>' +
+      '<figure class="shot" id="shot" hidden><img id="shot-image" alt="기록 요약 이미지"><figcaption>저장되지 않았다면 이미지를 길게 눌러 저장하세요. 이미지는 요약이며, 기록을 다시 열려면 링크가 필요합니다.</figcaption></figure></section>';
   }
 
-  function rowItem(r, tone) {
-    var lines = r.verdict === 'UNKNOWN' ? [r.label + ' · ' + r.notes.join(', ')] : r.notes;
+  function proof(m) {
+    return '<section><h2>근거</h2>' +
+      '<div class="seal-head">' + icon('info') + '<span>무결성 값</span></div>' +
+      '<strong class="seal-value num">' + esc(m.code) + '</strong>' +
+      m.codeNotes.map(function (n) { return '<p class="seal-note">' + esc(n) + '</p>'; }).join('') +
+      '<dl class="proof">' + m.proof.map(function (p) {
+        return '<div><dt>' + esc(p[0]) + '</dt><dd class="num">' + esc(p[1]) + (p[2] ? '<small>' + esc(p[2]) + '</small>' : '') + '</dd></div>';
+      }).join('') + '</dl></section>';
+  }
+
+  function values(r) {
+    if (r.before == null && r.after == null) return '';
+    function shown(v) { return v == null ? '값 없음' : v; }
+    return '<div class="values num"><span>인수 <b>' + esc(shown(r.before)) + '</b></span><span>반납 <b>' + esc(shown(r.after)) + '</b></span></div>';
+  }
+
+  function rowItem(r, tone, notes) {
+    var lines = r.verdict === 'UNKNOWN' ? [r.label + ' · ' + notes.join(', ')] : notes;
+    var written = notes.join(' ');
     var before = percent(r.before), after = percent(r.after);
-    var energy = (r.item === 'fuelPercent' || r.item === 'evSocPercent') && after !== null;
     var extra = '';
-    if (energy) {
-      var drop = before !== null && before > after ? before - after : 0;
-      extra = '<div class="values num"><span>인수 <b>' + esc(r.before || '-') + '</b></span><span>반납 <b>' + esc(r.after) + '</b></span></div>' +
-        '<div class="bar" role="img" aria-label="인수 ' + esc(r.before || '-') + ', 반납 ' + esc(r.after) + '">' +
-        '<i style="width:' + after + '%"></i>' + (drop ? '<b style="left:' + after + '%;width:' + drop + '%"></b><u style="left:' + before + '%"></u>' : '') + '</div>';
+    if (ENERGY.indexOf(r.item) >= 0 && after !== null) {
+      var low = before !== null && before > after ? before - after : 0;
+      extra = values(r) + '<div class="bar" role="img" aria-label="인수 ' + esc(r.before || '값 없음') + ', 반납 ' + esc(r.after) + '">' +
+        '<i style="width:' + after + '%"></i>' + (low ? '<b style="left:' + after + '%;width:' + low + '%"></b>' : '') +
+        (before !== null && before !== after ? '<u style="left:' + before + '%"></u>' : '') + '</div>';
+    } else if (!(r.before != null && r.after != null && written.indexOf(r.before) >= 0 && written.indexOf(r.after) >= 0)) {
+      // 문구에 없는 값이면 인수·반납 값을 밑에 적는다(주행 312km → 인수 23,410km, 반납 23,722km).
+      extra = values(r);
     }
     return '<li class="' + tone + '"><span class="badge">' + iconFor(r.item) + '</span><div class="text">' +
       '<strong>' + esc(lines[0] || r.label) + '</strong>' +
       lines.slice(1).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + extra + '</div></li>';
   }
 
-  function renderReport(json, hash) {
-    var summary = /^report-summary\//.test(json.schema);
-    var rows = (json.rows || []).map(function (r) { return Object.assign({ label: nameOf(r.item) }, r); });
-    var c = json.counts || {};
-    var strip = ORDER.map(function (v) { return new Array((c[v] || 0) + 1).join('<span class="v-' + v + '"></span>'); }).join('');
-    var legend = ORDER.map(function (v) {
-      return '<li><i class="v-' + v + '"></i>' + VERDICTS[v] + ' <b class="num">' + (c[v] || 0) + '</b></li>';
-    }).join('');
-    function section(v) {
-      var group = rows.filter(function (r) { return r.verdict === v; });
-      if (!group.length) return '';
-      var tone = v === 'NEEDS_CHECK' ? 'warn' : v === 'UNKNOWN' ? 'dim' : '';
-      return '<section><h2 class="' + (v === 'NEEDS_CHECK' ? 'warn' : '') + '">' + VERDICTS[v] + ' <span class="num">' + group.length + '</span></h2>' +
-        '<ul class="rows">' + group.map(function (r) { return rowItem(r, tone); }).join('') + '</ul></section>';
-    }
-    // 요약본(report-summary/1)은 변화 없는 항목을 이름만 담는다.
-    function unchanged() {
-      // 요약본 v1은 이름, v2는 항목 키를 담는다.
-      var list = summary ? (json.unchanged || []).map(function (x) { return NAMES[x] ? { item: x, label: NAMES[x] } : { label: x }; })
-        : rows.filter(function (r) { return r.verdict === 'UNCHANGED'; });
-      if (!list.length) return '';
-      return '<section><h2>변화 없음 <span class="num">' + list.length + '</span></h2><ul class="chips">' +
-        list.map(function (r) { return '<li>' + (r.item ? iconFor(r.item) : '') + esc(r.label) + '</li>'; }).join('') + '</ul></section>';
-    }
-    // 차 화면과 같은 순서: 확인 필요 → 참고 → 변화 없음 → 확인 불가
-    var sections = section('NEEDS_CHECK') + section('NOTE') + unchanged() + section('UNKNOWN');
-    var period = sameDay(json.pickup.at, json['return'].at) ? time(json.pickup.at) + ' → ' + clock(json['return'].at) : time(json.pickup.at) + ' → ' + time(json['return'].at);
-    view.innerHTML =
-      heading('반납 리포트', '기록 번호 <b class="num">' + esc(json.recordNo) + '</b> · 차량 ' + esc(json.vehicleId), period) +
-      seal(summary ? json.reportHash : hash, summary ? '요약본입니다. 값은 원본 리포트의 무결성 값입니다.' : '차 화면에 보이는 값과 같으면 같은 기록입니다.') +
-      '<div class="strip" aria-hidden="true">' + strip + '</div><ul class="legend">' + legend + '</ul>' +
-      '<p class="note">' + icon('info') + '<span>' + esc(DISCLAIMER) + '</span></p>' +
-      sections;
+  function timelineOf(json) {
+    var items = [];
+    (Array.isArray(json.timeline) ? json.timeline : []).forEach(function (t) { if (t && t.note) items.push({ at: t.at, note: String(t.note) }); });
+    (Array.isArray(json.gaps) ? json.gaps : []).forEach(function (g) { if (g && g.from) items.push({ at: g.from, to: g.to, gap: true }); });
+    items.sort(function (a, b) { return (new Date(a.at) - new Date(b.at)) || 0; });
+    function count(n) { return Math.max(0, Math.floor(+n) || 0); }
+    var more = count(json.timelineMore);
+    // 줄이 하나도 없으면(요약본) '외'가 어색하다.
+    var moreWord = !more ? '' : (items.some(function (e) { return !e.gap; }) ? '외 ' : '변화 기록 ') + more + '건';
+    return { items: items, moreWord: moreWord, gapsMore: count(json.gapsMore) };
+  }
+  function gapEnd(g) {
+    if (!g.to) return '';
+    if (underMinute(g.at, g.to)) return '1분 미만';
+    var length = span(g.at, g.to);
+    return endOf(g.at, g.to) + '까지' + (length ? ' · ' + length : '');
+  }
+  function timelineSection(t) {
+    if (!t.items.length && !t.moreWord && !t.gapsMore) return '';
+    var body = t.items.length ? '<ul class="tl">' + t.items.map(function (e) {
+      var at = '<time class="num" datetime="' + esc(e.at == null ? '' : e.at) + '">' + esc(stamp(e.at)) + '</time>';
+      if (!e.gap) return '<li>' + at + '<span>' + esc(e.note) + '</span></li>';
+      return '<li class="gap">' + at + '<span><b>' + icon('gap') + '앱이 기록하지 못한 구간</b><span class="num">' + esc(gapEnd(e)) + '</span></span></li>';
+    }).join('') + '</ul>' : '';
+    var more = t.moreWord ? '<p class="tl-more"><b class="num">' + esc(t.moreWord) + '</b>은 이 링크에 담기지 않았습니다.</p>' : '';
+    var gapsMore = t.gapsMore ? '<p class="tl-more">앱이 기록하지 못한 구간 <b class="num">외 ' + t.gapsMore + '건</b>도 이 링크에 담기지 않았습니다.</p>' : '';
+    return '<section><h2>대여 중 기록</h2><p class="hint">시각은 서울 시간입니다.</p>' + body + more + gapsMore + '</section>';
+  }
+  function timelineLines(t) {
+    return t.items.map(function (e) { return e.gap ? stamp(e.at) + ' 앱이 기록하지 못한 구간 ' + gapEnd(e) : stamp(e.at) + ' ' + e.note; })
+      .concat(t.moreWord ? [t.moreWord] : [], t.gapsMore ? ['앱이 기록하지 못한 구간 외 ' + t.gapsMore + '건'] : []);
   }
 
-  // 나중에 다시 열 수 있게 링크(기록이 # 뒤에 들어 있다)를 공유하거나 복사한다.
-  function bindKeep() {
-    var button = document.getElementById('keep'), done = document.getElementById('keep-done');
-    if (!button) return;
-    button.addEventListener('click', function () {
-      var url = location.href;
-      if (navigator.share) {
-        navigator.share({ title: document.title, url: url }).catch(function () {});
-      } else if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function () {
-          done.textContent = '링크를 복사했습니다. 메모나 메신저에 붙여 넣어 보관하세요.';
-          done.classList.add('on');
-        }, function () { window.prompt('이 링크를 복사해 보관하세요.', url); });
+  function reportModel(json, hash) {
+    var summary = /^report-summary\//.test(json.schema);
+    // 요약본의 코드는 차에 있는 전체 기록의 값을 옮겨 적은 것이다. 없을 때만 이 내용으로 계산한 값을 쓴다.
+    var recalculated = !summary || !json.reportHash;
+    // 문구는 기록에 묶여 있어 고치지 않고 보여 줄 때만 바꾼다. demo/ 기준의 단가는 업체가 정한 값이 아니다.
+    var demoPrice = /^demo\//.test(String(json.policy || ''));
+    var priceWord = demoPrice ? '시연 단가' : '업체 기준';
+    function priced(note) { return demoPrice ? String(note).replace(/업체 기준/g, priceWord) : note; }
+    var rows = (json.rows || []).map(function (r) { return Object.assign({ label: nameOf(r.item) }, r, { notes: (r.notes || []).map(priced) }); });
+    var c = json.counts || {};
+    var needs = c.NEEDS_CHECK || 0;
+    var unknown = c.UNKNOWN || 0;
+    var timeline = timelineOf(json);
+    var gapCount = timeline.items.filter(function (e) { return e.gap; }).length + timeline.gapsMore;
+    function own(r) { return r.notes.filter(function (n) { return !SHIELD_MARK.test(n); }); }
+    function onlyShield(r) { return r.verdict === 'NOTE' && r.notes.length > 0 && !own(r).length; }
+    function group(v) { return rows.filter(function (r) { return r.verdict === v && !onlyShield(r); }); }
+
+    // '(인수 때부터)'는 줄이 아니라 문구 단위로 본다. 경고등 한 줄에 새 경고등과 인수 때부터 켜진 경고등이 함께 올 수 있다.
+    var shields = [];
+    rows.forEach(function (r) {
+      r.notes.forEach(function (n) { if (SHIELD_MARK.test(n)) shields.push({ row: r, text: n.replace(SHIELD_MARK, '') }); });
+    });
+    var shieldTexts = shields.map(function (s) { return s.text; });
+    var shieldRows = rows.filter(onlyShield).length;
+    var cells = { NEEDS_CHECK: needs, SHIELD: shieldRows, NOTE: Math.max(0, (c.NOTE || 0) - shieldRows), UNCHANGED: c.UNCHANGED || 0, UNKNOWN: c.UNKNOWN || 0 };
+
+    // 요약본은 변화 없는 항목을 v1은 이름, v2는 항목 키로 담는다.
+    var quiet = summary ? (json.unchanged || []).map(function (x) { return NAMES[x] ? { item: x, label: NAMES[x] } : { item: keyOf(x), label: x }; })
+      : rows.filter(function (r) { return r.verdict === 'UNCHANGED'; });
+    function chipText(q) { return q.label + (q.after && USUAL.indexOf(q.after) < 0 ? ' ' + q.after : ''); }
+
+    // 결론의 재료: 연료·배터리 변화, 참고 금액
+    var energy = ENERGY.map(function (key) {
+      var row = rows.filter(function (r) { return r.item === key; })[0];
+      if (row) return row;
+      return quiet.some(function (q) { return q.item === key; }) ? { item: key, label: nameOf(key), verdict: 'UNCHANGED' } : null;
+    }).filter(Boolean);
+    function change(e) {
+      var b = e.before, a = e.after;
+      if (b != null && a != null && b !== a) return { page: b + ' → ' + a, text: (/%$/.test(b) && /%$/.test(a) ? b.slice(0, -1) : b) + '→' + a };
+      if (a != null && b === a) return { page: a + ' 그대로', text: a + ' 변화 없음' };
+      if (e.verdict === 'UNCHANGED') return { page: '변화 없음', text: '변화 없음' };
+      if (a != null) return { page: '반납 ' + a, text: '반납 ' + a };
+      return { page: '확인 불가', text: '확인 불가' };
+    }
+    var amounts = [];
+    rows.forEach(function (r) {
+      r.notes.forEach(function (n) {
+        var won = /(\d[\d,]*)\s*원/.exec(n);
+        if (!won || !(/참고 정산/.test(n) || ENERGY.indexOf(r.item) >= 0 || r.item === 'evCharging')) return;
+        var size = /약\s*[\d.,]+\s*(?:kWh|L|%p?)/i.exec(n);
+        amounts.push({ name: r.label, won: '약 ' + won[1] + '원', size: size ? size[0] : '' });
+      });
+    });
+
+    var lead = energy.length ? [{ text: energy.map(function (e) { return e.label + ' *' + change(e).page + '*'; }).join(', ') + ',' }] : [];
+    if (amounts.length) lead.push({ text: '참고 정산 ' + amounts.map(function (a) { return (amounts.length > 1 ? a.name + ' ' : '') + '*' + a.won + '*'; }).join(', ') + '입니다.' });
+    else if (needs) lead.push({ text: '확인 필요 *' + needs + '건*입니다.', warn: true });
+    else lead.push({ text: '확인 필요한 항목이 없습니다.' });
+
+    var sizes = amounts.map(function (a) { return a.size; }).filter(Boolean);
+    var needNames = group('NEEDS_CHECK').map(function (r) { return r.label; });
+    var status = [];
+    if (needs && (amounts.length || needNames.length)) status.push({ tone: 'warn', icon: 'warning', head: amounts.length ? '확인 필요 ' + needs + '건' : '', text: some(needNames, 4) });
+    if (shields.length) status.push({ tone: 'good', icon: 'shield', head: '인수 때부터 있던 항목 ' + shields.length + '건', text: some(shieldTexts, 3) });
+    // '확인 필요한 항목이 없습니다'는 비교한 항목만 말한다. 읽지 못한 항목과 기록하지 못한 구간은 결론 바로 아래에 함께 적는다.
+    if (unknown || gapCount) status.push({ tone: '', icon: 'gap', head: '', text: [unknown ? '확인 불가 ' + unknown + '건' : '', gapCount ? '앱이 기록하지 못한 구간 ' + gapCount + '건' : ''].filter(Boolean).join(' · ') });
+
+    function verdictSection(v) {
+      var list = group(v);
+      if (!list.length) return '';
+      var warn = v === 'NEEDS_CHECK';
+      return '<section><h2 class="' + (warn ? 'warn' : '') + '">' + (warn ? icon('warning') : '') + VERDICTS[v] + ' <span class="num">' + list.length + '</span></h2>' +
+        '<ul class="rows">' + list.map(function (r) { return rowItem(r, warn ? 'warn' : v === 'UNKNOWN' ? 'dim' : '', own(r)); }).join('') + '</ul></section>';
+    }
+    function shieldSection() {
+      if (!shields.length) return '';
+      return '<section><h2 class="good">' + icon('shield') + '인수 때부터 있던 항목 <span class="num">' + shields.length + '</span></h2><ul class="rows">' +
+        shields.map(function (s) {
+          return '<li class="good"><span class="badge">' + iconFor(s.row.item) + '</span><div class="text"><strong>' + esc(s.text) + '</strong>' +
+            '<span class="says">이 항목은 인수 기록에 있었습니다.</span>' + values(s.row) + '</div></li>';
+        }).join('') + '</ul></section>';
+    }
+    function chips() {
+      if (!quiet.length) return '';
+      return '<section><h2>변화 없음 <span class="num">' + quiet.length + '</span></h2><ul class="chips">' +
+        quiet.map(function (q) { return '<li>' + (q.item ? iconFor(q.item) : '') + esc(chipText(q)) + '</li>'; }).join('') + '</ul></section>';
+    }
+    var stripCells = [];
+    ORDER.forEach(function (v) { for (var i = 0; i < cells[v]; i++) stripCells.push(v); });
+    var overview = stripCells.length ? '<section><h2>비교한 항목 <span class="num">' + stripCells.length + '</span></h2>' +
+      '<div class="strip" aria-hidden="true">' + stripCells.map(function (v) { return '<span class="v-' + v + '"></span>'; }).join('') + '</div>' +
+      '<ul class="legend">' + ORDER.filter(function (v) { return v !== 'SHIELD' || cells.SHIELD; }).map(function (v) {
+        return '<li><i class="v-' + v + '"></i>' + VERDICTS[v] + ' <b class="num">' + cells[v] + '</b></li>';
+      }).join('') + '</ul></section>' : '';
+    function notesOf(v) { return group(v).reduce(function (all, r) { return all.concat(own(r)); }, []); }
+    var groups = [
+      { title: '확인 필요 ' + needs + '건', tone: 'warn', lines: notesOf('NEEDS_CHECK') },
+      { title: '인수 때부터 있던 항목 ' + shields.length + '건', tone: 'good', says: '이 항목은 인수 기록에 있었습니다.', lines: shieldTexts },
+      { title: '참고', lines: notesOf('NOTE') },
+      { title: '대여 중 기록(서울 시간)', lines: timelineLines(timeline) },
+      { title: '변화 없음 ' + quiet.length + '건', lines: quiet.length ? [quiet.map(chipText).join(', ')] : [] },
+      { title: '확인 불가', lines: group('UNKNOWN').map(function (r) { return r.label + ' · ' + r.notes.join(', '); }) }
+    ].filter(function (g) { return g.lines.length; });
+
+    var length = span(json.pickup.at, json['return'].at);
+    var byStaff = json.recordedBy === 'staff';
+    return {
+      doc: byStaff ? '반납 리포트 · 직원 기록' : '반납 리포트', opener: byStaff ? '차곡 직원 기록' : '차곡 기록', no: json.recordNo, vehicle: vehicleOf(json.vehicleId), mark: markOf(json),
+      code: short(recalculated ? hash : json.reportHash), summary: summary,
+      period: underMinute(json.pickup.at, json['return'].at) ? stamp(json.pickup.at) + ' (1분 미만)'
+        : stamp(json.pickup.at) + ' → ' + endOf(json.pickup.at, json['return'].at) + (length ? ' (' + length + ')' : ''),
+      lead: lead, status: status, disclaimer: true,
+      basis: amounts.length ? priceWord + ' · ' + (sizes.length ? sizes.join(', ') + ' · ' : '') + '청구 확정은 업체' : '',
+      facts: energy.map(function (e) { return e.label + ' ' + change(e).text; }).concat(amounts.length
+        ? '참고 정산 ' + amounts.map(function (a) { return (amounts.length > 1 ? a.name + ' ' : '') + a.won; }).join(', ') + (demoPrice ? '(시연 단가)' : '') : '확인 필요 ' + needs + '건',
+        unknown ? ['확인 불가 ' + unknown + '건'] : []),
+      shields: shieldTexts, shieldWord: '인수 기록에 있던 항목',
+      details: overview + verdictSection('NEEDS_CHECK') + shieldSection() + verdictSection('NOTE') + timelineSection(timeline) + chips() + verdictSection('UNKNOWN'),
+      strip: stripCells, groups: groups,
+      codeNotes: recalculated ? CODE_FULL : CODE_SUMMARY,
+      proof: [
+        ['기록 번호', json.recordNo], ['차량', vehicleOf(json.vehicleId), vehicleNote(json)],
+        ['인수', fullStamp(json.pickup.at), json.pickup.hash ? '코드 ' + short(json.pickup.hash) : ''],
+        ['반납', fullStamp(json['return'].at), json['return'].hash ? '코드 ' + short(json['return'].hash) : ''],
+        ['적용 기준', [json.rules, json.policy].filter(Boolean).join(' · ') || '-', demoPrice ? '시연 단가는 실제 업체 단가가 아닙니다' : '']
+      ].concat(byStaff ? [['기록한 사람', '직원', '고객의 반납 체크 없이 남긴 기록']] : [])
+    };
+  }
+
+  function snapshotModel(json, hash) {
+    var pickup = json.kind !== 'RETURN';
+    var word = pickup ? '인수' : '반납';
+    var readings = json.readings || {};
+    var known = Object.keys(LABELS).filter(function (k) { return readings[k] && readings[k].status !== 'UNSUPPORTED'; });
+    var flagged = pickup ? ['telltales', 'airbagsDeployed', 'tires', 'engineOil', 'brakeFluid', 'washerFluid'].filter(function (k) { return readings[k] && already(k, readings[k]); }) : [];
+    var rest = known.filter(function (k) { return flagged.indexOf(k) < 0; });
+    function flagText(k) { return (k === 'telltales' ? '경고등 켜짐: ' : LABELS[k] + ' ') + reading(k, readings[k]); }
+    // 공기압 수치가 정상이어도 경고등이 켜졌으면 '저압 없음'이라고 하지 않는다(:core와 같다).
+    var tireLamp = readings.telltales && readings.telltales.status === 'OK' && readings.telltales.value.some(function (t) { return t.code === 'TPMS'; });
+    function shown(k) { return k === 'tires' && tireLamp && readings[k].status === 'OK' && !already(k, readings[k]) ? '공기압 경고등 켜짐' : reading(k, readings[k]); }
+    var flags = flagged.map(flagText);
+    var headline = ['fuelPercent', 'evSocPercent', 'odometerKm'].filter(function (k) { return readings[k] && readings[k].status === 'OK'; });
+    function bit(k) { return LABELS[k] + ' *' + reading(k, readings[k]) + '*'; }
+    var levels = headline.filter(function (k) { return k !== 'odometerKm'; }).map(bit);
+    var distance = headline.indexOf('odometerKm') >= 0 ? bit('odometerKm') : '';
+    var head = '인수 때 이미 있던 항목 ' + flags.length + '건';
+    return {
+      doc: word + ' 기록', opener: '차곡 ' + word + ' 기록', no: json.recordNo, vehicle: vehicleOf(json.vehicleId), mark: markOf(json),
+      code: short(hash), period: stamp(json.capturedAt),
+      lead: levels.length && distance ? [{ text: word + ' 때 ' + levels.join(', ') + ',' }, { text: distance + '입니다.' }]
+        : levels.length || distance ? [{ text: word + ' 때 ' + (levels.join(', ') || distance) + '입니다.' }] : [{ text: word + ' 기록입니다.' }],
+      status: flags.length ? [{ tone: 'good', icon: 'shield', head: head, text: some(flags, 3) }] : [],
+      disclaimer: false, basis: '',
+      facts: headline.map(function (k) { return LABELS[k] + ' ' + reading(k, readings[k]); }),
+      shields: flags, shieldWord: '인수 때 있던 항목',
+      details: (flags.length ? '<section><h2 class="good">' + icon('shield') + '인수 때 이미 있던 항목 <span class="num">' + flags.length + '</span></h2><ul class="rows">' +
+          flagged.map(function (k) {
+            return '<li class="good"><span class="badge">' + iconFor(k) + '</span><div class="text"><strong>' + esc(flagText(k)) + '</strong><span class="says">이 항목은 인수 기록에 있습니다.</span></div></li>';
+          }).join('') + '</ul></section>' : '') +
+        '<section><h2>' + word + ' 때 상태</h2><div class="facts">' + rest.map(function (k) {
+          var r = readings[k];
+          return '<div class="fact ' + (r.status !== 'OK' ? 'dim' : '') + '"><span class="fact-label">' + iconFor(k) + esc(LABELS[k]) + '</span>' +
+            '<span class="fact-value num">' + esc(shown(k)) + '</span></div>';
+        }).join('') + '</div></section>',
+      strip: null,
+      groups: (flags.length ? [{ title: head, tone: 'good', says: '이 항목은 인수 기록에 있습니다.', lines: flags }] : [])
+        .concat([{ title: word + ' 때 상태', lines: [rest.map(function (k) { return LABELS[k] + ' ' + shown(k); }).join(' · ')] }]),
+      codeNotes: CODE_FULL.concat('반납 리포트의 근거에도 이 코드가 ' + word + ' 코드로 남습니다.'),
+      proof: [['기록 번호', json.recordNo], ['차량', vehicleOf(json.vehicleId), vehicleNote(json)], [word, fullStamp(json.capturedAt)], ['적용 기준', json.rules || '-']]
+    };
+  }
+
+  // 복사: 클립보드 API → 예전 방식 순서로 해 보고, 둘 다 안 되면 false
+  function copyText(text) {
+    function legacy() {
+      var area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+      document.body.appendChild(area);
+      area.select();
+      area.setSelectionRange(0, text.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(area);
+      return ok;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { return true; }, legacy);
+    return Promise.resolve(legacy());
+  }
+  // 복사한 뒤 버튼을 잠깐 '복사했습니다'로 바꾼다.
+  function flash(button) {
+    var label = button.querySelector('span'), use = button.querySelector('use');
+    if (!button.dataset.label) { button.dataset.label = label.textContent; button.dataset.icon = use.getAttribute('href'); }
+    label.textContent = '복사했습니다';
+    use.setAttribute('href', '#i-check');
+    clearTimeout(button.timer);
+    button.timer = setTimeout(function () {
+      label.textContent = button.dataset.label;
+      use.setAttribute('href', button.dataset.icon);
+    }, 2500);
+  }
+  function say(el, text, miss) { el.textContent = text; el.classList.toggle('miss', !!miss); }
+  function copyInto(button, done, manual, text, ok) {
+    return copyText(text).then(function (copied) {
+      manual.hidden = copied;
+      if (copied) {
+        say(done, ok);
+        flash(button);
       } else {
-        window.prompt('이 링크를 복사해 보관하세요.', url);
+        say(done, '자동으로 복사하지 못했습니다. 아래 글을 길게 눌러 복사하세요.', true);
+        manual.value = text;
+        manual.focus();
+        manual.select();
+        manual.scrollTop = 0;
+      }
+    });
+  }
+
+  // 요약 이미지. 외부 라이브러리 없이 canvas에 글자를 직접 그린다. 업체에 보낼 수도 있어 테마와 상관없이 낮 색을 쓴다.
+  var DAY = { paper: '#F2F4F5', rule: '#D5DBDE', ink: '#14191C', ink2: '#55616A', warn: '#A4570F', good: '#1E7A4C', NEEDS_CHECK: '#EC9846', SHIELD: '#1E7A4C', NOTE: '#55616A', UNCHANGED: '#BAC2C7', UNKNOWN: '#8B969D' };
+  var FACE = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif';
+  function imageBlocks(m) {
+    var out = [];
+    function line(text, size, weight, color, before) { out.push({ text: text, size: size, weight: weight, color: color, before: before }); }
+    line('차곡 ' + m.doc + (m.mark ? ' · ' + m.mark : ''), 14, 700, DAY.ink2, 0);
+    m.lead.forEach(function (l, i) { line(bare(l.text), 24, 700, l.warn ? DAY.warn : DAY.ink, i ? 0 : 12); });
+    if (m.basis) line(m.basis, 13, 400, DAY.ink2, 4);
+    if (m.strip && m.strip.length) out.push({ strip: m.strip, before: 16 });
+    m.groups.forEach(function (g) {
+      line(g.title, 15, 700, g.tone === 'warn' ? DAY.warn : g.tone === 'good' ? DAY.good : DAY.ink2, 18);
+      if (g.says) line(g.says, 13, 400, DAY.good, 1);
+      g.lines.forEach(function (text) { line(text, 14, 400, DAY.ink, 3); });
+    });
+    out.push({ rule: true, before: 20 });
+    line('기록 번호 ' + m.no + ' · 차량 ' + m.vehicle, 13, 400, DAY.ink2, 14);
+    line(m.period + ' (서울 시간)', 13, 400, DAY.ink2, 0);
+    line('무결성 값 ' + m.code, 17, 700, DAY.ink, 8);
+    line(CODE_IMAGE, 12, 400, DAY.ink2, 2);
+    if (m.disclaimer) line(DISCLAIMER, 12, 400, DAY.ink2, 6);
+    line(m.summary ? '이 이미지는 요약입니다. 전체 기록은 차에 보관됩니다.' : '이 이미지는 요약입니다. 원본 기록은 차곡 링크에 있습니다.', 12, 400, DAY.ink2, 6);
+    return out;
+  }
+  function wrap(pen, text, width) {
+    var lines = [], line = '';
+    String(text).split(' ').forEach(function (word) {
+      var next = line ? line + ' ' + word : word;
+      if (pen.measureText(next).width <= width) { line = next; return; }
+      if (line) lines.push(line);
+      while (pen.measureText(word).width > width) {
+        var n = word.length;
+        while (n > 1 && pen.measureText(word.slice(0, n)).width > width) n--;
+        lines.push(word.slice(0, n));
+        word = word.slice(n);
+      }
+      line = word;
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+  function drawImage(m) {
+    var W = 390, PAD = 24, SCALE = 3;
+    var canvas = document.createElement('canvas'), pen = canvas.getContext('2d');
+    var blocks = imageBlocks(m), y = PAD;
+    function face(b) { return b.weight + ' ' + b.size + 'px ' + FACE; }
+    blocks.forEach(function (b) {
+      y += b.before || 0;
+      b.y = y;
+      if (b.rule) { y += 1; return; }
+      if (b.strip) { y += 14; return; }
+      pen.font = face(b);
+      b.lines = wrap(pen, b.text, W - PAD * 2);
+      b.height = Math.round(b.size * 1.5);
+      y += b.lines.length * b.height;
+    });
+    var H = y + PAD;
+    canvas.width = W * SCALE;
+    canvas.height = H * SCALE;
+    pen.scale(SCALE, SCALE);
+    pen.fillStyle = DAY.paper;
+    pen.fillRect(0, 0, W, H);
+    pen.textBaseline = 'middle';
+    blocks.forEach(function (b) {
+      if (b.rule) { pen.fillStyle = DAY.rule; pen.fillRect(PAD, b.y, W - PAD * 2, 1); return; }
+      if (b.strip) {
+        var gap = 3, cell = (W - PAD * 2 - gap * (b.strip.length - 1)) / b.strip.length;
+        b.strip.forEach(function (v, i) {
+          var x = PAD + i * (cell + gap);
+          if (v === 'NOTE' || v === 'UNKNOWN') {
+            pen.strokeStyle = DAY[v];
+            pen.lineWidth = 2;
+            pen.setLineDash(v === 'UNKNOWN' ? [3, 2] : []);
+            pen.strokeRect(x + 1, b.y + 1, cell - 2, 12);
+          } else {
+            pen.fillStyle = DAY[v];
+            pen.fillRect(x, b.y, cell, 14);
+          }
+        });
+        return;
+      }
+      pen.font = face(b);
+      pen.fillStyle = b.color;
+      b.lines.forEach(function (text, i) { pen.fillText(text, PAD, b.y + b.height * (i + 0.5)); });
+    });
+    return canvas;
+  }
+  function isApplePhone() { return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+
+  function bindActions(m) {
+    var link = location.href;
+    var keep = document.getElementById('keep'), keepDone = document.getElementById('keep-done'), keepManual = document.getElementById('keep-manual');
+    var copyButton = document.getElementById('copy-text'), copyLink = document.getElementById('copy-link'), save = document.getElementById('save-image');
+    var KEPT = '링크를 복사했습니다. 메모나 나에게 보내기에 붙여 넣어 보관하세요.';
+
+    copyButton.addEventListener('click', function () {
+      copyInto(copyButton, document.getElementById('copy-text-done'), document.getElementById('copy-text-manual'), message(m) + ' 링크: ' + link, '문구를 복사했습니다. 답장 칸에 붙여 넣으세요.');
+    });
+    keep.addEventListener('click', function () {
+      if (!navigator.share) { copyInto(keep, keepDone, keepManual, link, KEPT); return; }
+      navigator.share({ title: document.title, text: '차곡 ' + m.doc + ' ' + m.no, url: link }).then(function () {
+        say(keepDone, '공유했습니다. 보낸 곳에서 이 링크를 열면 같은 기록이 나옵니다.');
+      }, function (e) {
+        if (!e || e.name !== 'AbortError') copyInto(keep, keepDone, keepManual, link, KEPT);
+      });
+    });
+    if (copyLink) copyLink.addEventListener('click', function () { copyInto(copyLink, keepDone, keepManual, link, KEPT); });
+
+    save.addEventListener('click', function () {
+      var label = save.querySelector('span'), idle = label.textContent;
+      function finish(text, miss) { save.disabled = false; label.textContent = idle; say(keepDone, text, miss); }
+      save.disabled = true;
+      label.textContent = '만드는 중…';
+      try {
+        drawImage(m).toBlob(function (blob) {
+          if (!blob) { finish('이미지를 만들지 못했습니다. 화면을 캡처해 보관하세요.', true); return; }
+          var name = 'chagok-' + String(m.no).replace(/[^\w-]/g, '') + '.png';
+          var url = URL.createObjectURL(blob);
+          var shot = document.getElementById('shot'), image = document.getElementById('shot-image');
+          if (image.src) URL.revokeObjectURL(image.src);
+          image.src = url;
+          shot.hidden = false;
+          var file = isApplePhone() && navigator.canShare && typeof File === 'function' ? new File([blob], name, { type: 'image/png' }) : null;
+          if (file && navigator.canShare({ files: [file] })) {
+            // 아이폰은 공유 시트의 '이미지 저장'이 사진 앱으로 가는 길이다.
+            navigator.share({ files: [file], title: document.title }).then(function () { finish('공유 창을 닫았습니다. \'이미지 저장\'을 골랐다면 사진 앱에 있습니다.'); }, function () { finish('아래 이미지를 길게 눌러 저장하세요.', true); });
+            return;
+          }
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          finish('이미지 내려받기를 시작했습니다. 내려받은 파일 목록을 확인하세요.');
+        }, 'image/png');
+      } catch (e) {
+        finish('이미지를 만들지 못했습니다. 화면을 캡처해 보관하세요.', true);
+      }
+    });
+  }
+
+  // 업체용 반납 목록(../ops/)으로 가는 조용한 길. 고객 행동과 섞이지 않게 맨 아래에 글자 버튼으로만 둔다.
+  function opsUrl() {
+    var path = String(location.pathname || '');
+    return /\/r(\/(index\.html)?)?$/.test(path) ? path.replace(/\/r(\/(index\.html)?)?$/, '/ops/') : '../ops/';
+  }
+  function ledgerAction(sample) {
+    if (sample) return '<section class="ops"><a class="ops-add" href="' + esc(opsUrl()) + '">반납 목록으로 돌아가기</a></section>';
+    return '<section class="ops"><button type="button" class="ops-add" id="ops-add"><span>업체 직원이신가요? 이 기록을 반납 목록에 추가</span></button>' +
+      '<p class="ops-hint">고객은 누르지 않아도 됩니다. 목록은 이 휴대폰에만 저장되고 어디로도 보내지지 않습니다.</p>' +
+      '<p class="done" id="ops-done" role="status"></p></section>';
+  }
+  // 저장 공간을 못 쓰면 던진다. 부르는 쪽에서 잡는다.
+  function ledgerItems() {
+    var raw = window.localStorage.getItem(LEDGER_KEY);
+    if (!raw) return [];
+    var data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.items)) throw new SyntaxError('ledger');
+    return data.items;
+  }
+  function bindLedger(key, code) {
+    var add = document.getElementById('ops-add');
+    if (!add) return;
+    function has(items) { return items.some(function (i) { return i && i.key === key; }); }
+    var leaving = false;
+    function open(word) { leaving = true; location.assign(opsUrl() + '#' + word + '=' + key.replace('sha256:', '').slice(0, 16)); }
+    // 처음 열 때와 뒤로 가기로 돌아올 때 버튼 글을 맞춘다.
+    function refresh() {
+      leaving = false;
+      try { if (has(ledgerItems())) add.querySelector('span').textContent = '이 기록은 반납 목록에 있습니다. 목록 열기'; } catch (e) { /* 누를 때 알린다 */ }
+    }
+    refresh();
+    window.addEventListener('pageshow', refresh);
+    add.addEventListener('click', function () {
+      if (leaving) return;
+      try {
+        var items = ledgerItems();
+        if (has(items)) return open('exists');
+        items.push({ key: key, code: code, addedAt: new Date().toISOString() });
+        var raw = JSON.stringify({ v: 1, items: items });
+        window.localStorage.setItem(LEDGER_KEY, raw);
+        if (window.localStorage.getItem(LEDGER_KEY) !== raw) throw new Error('not saved');
+        open('added');
+      } catch (e) {
+        // 저장된 목록이 깨졌으면 목록 페이지가 그 사실을 알리고 정리할 길을 준다.
+        if (e && e.name === 'SyntaxError') return location.assign(opsUrl());
+        say(document.getElementById('ops-done'), '이 브라우저에 저장하지 못했습니다. 시크릿 모드이거나 사이트 데이터가 막혀 있을 수 있습니다. 일반 창에서 이 링크를 다시 열어 주세요.', true);
       }
     });
   }
 
   var match = /[#&]d=([0-9]+)\.([A-Za-z0-9_-]+)/.exec(location.hash);
-  if (!match) return fail('기록이 담긴 링크가 아닙니다. 차 화면의 QR을 다시 찍어 주세요.');
-  if (match[1] !== '1') return fail('이 페이지가 모르는 기록 형식입니다.');
-  if (typeof DecompressionStream === 'undefined' || !window.crypto || !crypto.subtle) return fail('이 브라우저에서는 기록을 열 수 없습니다. 최신 브라우저로 열어 주세요.');
+  if (!match) return fail('기록이 담긴 링크가 아닙니다. 보관해 둔 링크를 끝까지 그대로 열어 주세요. 차 화면에 QR이 보이지 않으면 업체 직원에게 요청하세요.');
+  if (match[1] !== '1') return fail('이 페이지가 모르는 기록 형식입니다. 페이지를 새로 고침한 뒤 다시 열어 주세요.');
+  if (typeof DecompressionStream === 'undefined' || !window.crypto || !crypto.subtle) return fail('이 브라우저에서는 기록을 열 수 없습니다. Chrome이나 Safari 최신 버전으로 열어 주세요.');
 
   var text;
   inflate(bytes(match[2])).then(function (t) { text = t; return sha256(t); }).then(function (hash) {
     var json = JSON.parse(text);
-    if (json.demo) document.getElementById('demo').innerHTML = '<span class="tag">시연 모드</span>';
-    if (json.schema === 'snapshot/1') renderSnapshot(json, hash);
-    else if (/^report(-summary)?\/[12]$/.test(json.schema)) renderReport(json, hash);
-    else return fail('이 페이지가 모르는 기록 형식입니다.');
+    var model;
+    if (json.schema === 'snapshot/1') model = snapshotModel(json, hash);
+    else if (/^report(-summary)?\/[12]$/.test(json.schema)) model = reportModel(json, hash);
+    else return fail('이 페이지가 모르는 기록 형식입니다. 페이지를 새로 고침한 뒤 다시 열어 주세요.');
+    if (model.mark) document.getElementById('demo').innerHTML = '<span class="tag">' + esc(model.mark) + '</span>';
+    document.getElementById('doc').textContent = model.doc;
+    // 인수 기록은 반납이 아니므로 반납 목록에 넣지 않는다.
+    var isReport = json.schema !== 'snapshot/1';
+    view.innerHTML = (json.sample ? '<div class="state">' + icon('info') + '<p>시연용 예시입니다. 실제 차량에서 나온 기록이 아닙니다.</p></div>' : '') +
+      hero(model) + actions(model) + model.details + proof(model) + (isReport ? ledgerAction(!!json.sample) : '');
     document.title = '차곡 · ' + json.recordNo;
-    bindKeep();
-  }).catch(function () { fail('기록을 풀지 못했습니다. 링크가 잘렸을 수 있습니다. QR을 다시 찍어 주세요.'); });
+    bindActions(model);
+    // 업체용 버튼에 문제가 생겨도 이미 그린 고객 기록을 가리지 않는다.
+    if (isReport && !json.sample) { try { bindLedger(json.reportHash || hash, match[1] + '.' + match[2]); } catch (e) { /* 버튼만 동작하지 않는다 */ } }
+  }).catch(function () { fail('기록을 풀지 못했습니다. 링크가 잘렸을 수 있습니다. 보관해 둔 링크를 끝까지 복사해 다시 열어 주세요. 차 화면에 QR이 보이지 않으면 업체 직원에게 요청하세요.'); });
 })();
 </script>
 </body>
