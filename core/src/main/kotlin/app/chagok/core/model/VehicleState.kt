@@ -26,7 +26,12 @@ data class TireState(
 )
 
 /** 경고등. code는 SDK 상수 이름, label은 화면에 보일 이름. */
-data class Telltale(val code: String, val label: String)
+data class Telltale(val code: String, val label: String) {
+    companion object {
+        /** 타이어 공기압 경고등. 공기압 수치를 주지 않는 차에서는 타이어 칸의 근거가 된다. */
+        const val TPMS = "TPMS"
+    }
+}
 
 data class GeoPoint(val latitude: Double, val longitude: Double)
 
@@ -35,11 +40,14 @@ enum class StateItem(val label: String, val key: String) {
     FUEL("연료", "fuelPercent"),
     EV_SOC("배터리", "evSocPercent"),
     EV_CHARGING("충전", "evCharging"),
+    EV_CAPACITY("배터리 용량", "evCapacityKwh"),
     ODOMETER("주행거리", "odometerKm"),
     TRIP_SINCE_REFILL("주유 후 주행거리", "tripSinceRefillKm"),
     DOORS("문", "doorsOpen"),
     DOOR_LOCKS("문 잠금", "doorsLocked"),
     WINDOWS("창문", "windowsOpen"),
+    TRUNK("트렁크", "trunkOpen"),
+    CHARGE_PORT("충전구", "chargePortOpen"),
     HEADLIGHTS("전조등", "headlightsOn"),
     TAIL_LAMP("미등", "tailLampOn"),
     CABIN_LIGHT("실내등", "cabinLightOn"),
@@ -66,17 +74,21 @@ sealed interface Unavailable {
  * 한 시점의 차 상태.
  *
  * null이나 빈 맵은 "이 차가 지원하지 않거나 읽지 못함"이지 "없음"이 아니다. 어느 쪽인지는 [unavailable]에 적는다.
- * 단위는 거리 km, 잔량 0~100%, 타이어 공기압 kPa이다. SDK 단위가 다르면 어댑터에서 바꿔 넣는다.
+ * 단위는 거리 km, 잔량 0~100%, 배터리 용량 kWh, 타이어 공기압 kPa이다. SDK 단위가 다르면 어댑터에서 바꿔 넣는다.
  */
 data class VehicleState(
     val fuelPercent: Double? = null,
     val evSocPercent: Double? = null,
     val evCharging: Boolean? = null,
+    /** 차가 주는 배터리 용량. 참고 정산에서 업체 기준(RentalPolicy)보다 먼저 쓴다. */
+    val evCapacityKwh: Double? = null,
     val odometerKm: Double? = null,
     val tripSinceRefillKm: Double? = null,
     val doorsOpen: Map<Area, Boolean> = emptyMap(),
     val doorsLocked: Map<Area, Boolean> = emptyMap(),
     val windowsOpen: Map<Area, Boolean> = emptyMap(),
+    val trunkOpen: Boolean? = null,
+    val chargePortOpen: Boolean? = null,
     /** 전조등 스위치가 켜짐으로 고정된 상태. 자동 모드에서 켜진 것은 꺼 달라고 할 일이 아니므로 false로 넣는다. */
     val headlightsOn: Boolean? = null,
     val tailLampOn: Boolean? = null,
@@ -97,11 +109,14 @@ data class VehicleState(
         StateItem.FUEL -> fuelPercent != null
         StateItem.EV_SOC -> evSocPercent != null
         StateItem.EV_CHARGING -> evCharging != null
+        StateItem.EV_CAPACITY -> evCapacityKwh != null
         StateItem.ODOMETER -> odometerKm != null
         StateItem.TRIP_SINCE_REFILL -> tripSinceRefillKm != null
         StateItem.DOORS -> doorsOpen.isNotEmpty()
         StateItem.DOOR_LOCKS -> doorsLocked.isNotEmpty()
         StateItem.WINDOWS -> windowsOpen.isNotEmpty()
+        StateItem.TRUNK -> trunkOpen != null
+        StateItem.CHARGE_PORT -> chargePortOpen != null
         StateItem.HEADLIGHTS -> headlightsOn != null
         StateItem.TAIL_LAMP -> tailLampOn != null
         StateItem.CABIN_LIGHT -> cabinLightOn != null
@@ -119,6 +134,9 @@ data class VehicleState(
     fun missing(item: StateItem): Unavailable? =
         if (has(item)) null else unavailable[item] ?: Unavailable.Failed(NOT_READ)
 
+    /** 타이어 공기압 경고등이 켜졌는지. 경고등을 읽지 못했으면 null이다. */
+    val tirePressureLamp: Boolean? get() = telltales?.any { it.code == Telltale.TPMS }
+
     /** [items]만 남긴 상태 */
     fun only(items: Set<StateItem>): VehicleState {
         fun <T> keep(item: StateItem, value: T, empty: T): T = if (item in items) value else empty
@@ -126,11 +144,14 @@ data class VehicleState(
             fuelPercent = keep(StateItem.FUEL, fuelPercent, null),
             evSocPercent = keep(StateItem.EV_SOC, evSocPercent, null),
             evCharging = keep(StateItem.EV_CHARGING, evCharging, null),
+            evCapacityKwh = keep(StateItem.EV_CAPACITY, evCapacityKwh, null),
             odometerKm = keep(StateItem.ODOMETER, odometerKm, null),
             tripSinceRefillKm = keep(StateItem.TRIP_SINCE_REFILL, tripSinceRefillKm, null),
             doorsOpen = keep(StateItem.DOORS, doorsOpen, emptyMap()),
             doorsLocked = keep(StateItem.DOOR_LOCKS, doorsLocked, emptyMap()),
             windowsOpen = keep(StateItem.WINDOWS, windowsOpen, emptyMap()),
+            trunkOpen = keep(StateItem.TRUNK, trunkOpen, null),
+            chargePortOpen = keep(StateItem.CHARGE_PORT, chargePortOpen, null),
             headlightsOn = keep(StateItem.HEADLIGHTS, headlightsOn, null),
             tailLampOn = keep(StateItem.TAIL_LAMP, tailLampOn, null),
             cabinLightOn = keep(StateItem.CABIN_LIGHT, cabinLightOn, null),
@@ -153,11 +174,14 @@ data class VehicleState(
             fuelPercent = pick(StateItem.FUEL, fuelPercent, other.fuelPercent),
             evSocPercent = pick(StateItem.EV_SOC, evSocPercent, other.evSocPercent),
             evCharging = pick(StateItem.EV_CHARGING, evCharging, other.evCharging),
+            evCapacityKwh = pick(StateItem.EV_CAPACITY, evCapacityKwh, other.evCapacityKwh),
             odometerKm = pick(StateItem.ODOMETER, odometerKm, other.odometerKm),
             tripSinceRefillKm = pick(StateItem.TRIP_SINCE_REFILL, tripSinceRefillKm, other.tripSinceRefillKm),
             doorsOpen = pick(StateItem.DOORS, doorsOpen, other.doorsOpen),
             doorsLocked = pick(StateItem.DOOR_LOCKS, doorsLocked, other.doorsLocked),
             windowsOpen = pick(StateItem.WINDOWS, windowsOpen, other.windowsOpen),
+            trunkOpen = pick(StateItem.TRUNK, trunkOpen, other.trunkOpen),
+            chargePortOpen = pick(StateItem.CHARGE_PORT, chargePortOpen, other.chargePortOpen),
             headlightsOn = pick(StateItem.HEADLIGHTS, headlightsOn, other.headlightsOn),
             tailLampOn = pick(StateItem.TAIL_LAMP, tailLampOn, other.tailLampOn),
             cabinLightOn = pick(StateItem.CABIN_LIGHT, cabinLightOn, other.cabinLightOn),

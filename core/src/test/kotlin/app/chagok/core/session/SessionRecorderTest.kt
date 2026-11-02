@@ -15,6 +15,7 @@ import app.chagok.core.model.VehicleState
 import app.chagok.core.source.VehicleSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -23,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.minutes
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionRecorderTest {
@@ -134,6 +136,52 @@ class SessionRecorderTest {
                 VehicleEvent.Moved(gwanghwamun),
             ),
             session.finish().events.map { it.event },
+        )
+    }
+
+    @Test
+    fun `이어 가는 세션은 저장해 둔 이벤트에 덧붙이고 새 이벤트만 알린다`() = runTest {
+        val vehicle = FakeVehicle(VehicleState(engineOil = FluidLevel.NORMAL))
+        val before = LoggedEvent(at(1), null, VehicleEvent.FluidChanged(StateItem.WASHER_FLUID, FluidLevel.LOW))
+        val told = mutableListOf<LoggedEvent>()
+        val session = SessionRecorder(vehicle, now = virtualNow()).start(backgroundScope, restored = listOf(before), onEvent = { told += it })
+        runCurrent()
+
+        vehicle.update { copy(engineOil = FluidLevel.LOW) }
+        runCurrent()
+
+        val new = LoggedEvent(at(0), null, VehicleEvent.FluidChanged(StateItem.ENGINE_OIL, FluidLevel.LOW))
+        assertEquals(listOf(new), told)
+        assertEquals(listOf(before, new), session.events.value)
+    }
+
+    @Test
+    fun `구독이 끊기면 기다렸다가 다시 구독하고 그 시각을 남긴다`() = runTest {
+        val fake = FakeVehicle(VehicleState(engineOil = FluidLevel.NORMAL))
+        var attempts = 0
+        val flaky = object : VehicleSource {
+            override suspend fun state() = VehicleState()
+            override fun changes(): Flow<VehicleEvent> = flow {
+                if (attempts++ == 0) throw IllegalStateException("차 서비스 끊김")
+                emitAll(fake.changes())
+            }
+        }
+        val session = SessionRecorder(flaky, now = virtualNow()).start(backgroundScope, resubscribeAfter = 1.minutes)
+        runCurrent()
+
+        fake.update { copy(engineOil = FluidLevel.LOW) } // 끊긴 동안의 변화는 보지 못한다.
+        advanceTimeBy(1.minutes)
+        runCurrent()
+        fake.update { copy(engineOil = FluidLevel.NORMAL) }
+        runCurrent()
+
+        assertEquals(
+            listOf(
+                LoggedEvent(at(0), null, VehicleEvent.Note(VehicleEvent.SOURCE_ERROR, "차 서비스 끊김")),
+                LoggedEvent(at(60), null, VehicleEvent.Note(VehicleEvent.SOURCE_RESUMED)),
+                LoggedEvent(at(60), null, VehicleEvent.FluidChanged(StateItem.ENGINE_OIL, FluidLevel.NORMAL)),
+            ),
+            session.events.value,
         )
     }
 }

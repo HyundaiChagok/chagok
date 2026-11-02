@@ -29,6 +29,10 @@ android {
         // 데이터 QR이 여는 고객 리포트 웹 주소. web/을 올린 뒤 gradle.properties의 chagok.reportBaseUrl을 바꾼다.
         val reportBaseUrl = providers.gradleProperty("chagok.reportBaseUrl").getOrElse("https://example.com/chagok")
         buildConfigField("String", "REPORT_BASE_URL", "\"$reportBaseUrl\"")
+        // 값의 출처(gradle.properties의 chagok.demoMode). 빌드할 때 -Pchagok.demoMode=scenario로 바꿀 수 있다.
+        val demoMode = providers.gradleProperty("chagok.demoMode").getOrElse("live")
+        require(demoMode == "live" || demoMode == "scenario") { "chagok.demoMode는 live나 scenario여야 합니다: $demoMode" }
+        buildConfigField("String", "DEMO_MODE", "\"$demoMode\"")
     }
 
     signingConfigs {
@@ -58,6 +62,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        // JVM 단위 테스트는 컨트롤러와 저장소만 본다. 코루틴이 Android 메인 스레드를 찾다 실패하지 않게 한다.
+        unitTests.isReturnDefaultValues = true
+        unitTests.all { it.defaultCharacterEncoding = "UTF-8" }
+    }
 }
 
 // 공모전 제출 파일: apk/〈팀명〉_차곡_release.apk. 팀명은 gradle.properties의 chagok.team이나 -Pchagok.team=…으로 준다.
@@ -83,4 +93,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.zxing.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

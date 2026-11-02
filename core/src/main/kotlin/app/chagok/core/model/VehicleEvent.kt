@@ -2,11 +2,17 @@ package app.chagok.core.model
 
 import java.time.Instant
 
-/** 세션 동안 기록할 변화. 연료·주행거리처럼 계속 바뀌는 값은 기록하지 않고 스냅샷끼리 비교한다. */
+/** 세션 동안 일어나는 변화. 연료·배터리·주행거리처럼 계속 바뀌는 값은 기록하지 않고 스냅샷끼리 비교한다([LevelChanged]는 화면 갱신용이다). */
 sealed interface VehicleEvent {
     data class DoorChanged(val area: Area, val open: Boolean) : VehicleEvent
     data class LockChanged(val area: Area, val locked: Boolean) : VehicleEvent
     data class WindowChanged(val area: Area, val open: Boolean) : VehicleEvent
+
+    /** item은 TRUNK, CHARGE_PORT 중 하나 */
+    data class ClosureChanged(val item: StateItem, val open: Boolean) : VehicleEvent
+
+    /** item은 FUEL, EV_SOC, ODOMETER 중 하나. 반납 체크를 바로 다시 계산하는 신호이고 기록에는 남기지 않는다. */
+    data class LevelChanged(val item: StateItem, val value: Double) : VehicleEvent
 
     /** item은 HEADLIGHTS, TAIL_LAMP, CABIN_LIGHT 중 하나 */
     data class LightChanged(val item: StateItem, val on: Boolean) : VehicleEvent
@@ -25,6 +31,9 @@ sealed interface VehicleEvent {
     companion object {
         /** 차나 위치 데이터 구독이 끊겼을 때 남기는 [Note]의 type */
         const val SOURCE_ERROR = "source_error"
+
+        /** 끊겼던 구독을 다시 시작했을 때 남기는 [Note]의 type. [SOURCE_ERROR]부터 여기까지가 기록 공백이다. */
+        const val SOURCE_RESUMED = "source_resumed"
     }
 }
 
@@ -34,6 +43,8 @@ val VehicleEvent.item: StateItem?
         is VehicleEvent.DoorChanged -> StateItem.DOORS
         is VehicleEvent.LockChanged -> StateItem.DOOR_LOCKS
         is VehicleEvent.WindowChanged -> StateItem.WINDOWS
+        is VehicleEvent.ClosureChanged -> item
+        is VehicleEvent.LevelChanged -> item
         is VehicleEvent.LightChanged -> item
         is VehicleEvent.ParkingBrakeChanged -> StateItem.PARKING_BRAKE
         is VehicleEvent.SeatOccupancyChanged -> StateItem.SEATS

@@ -39,7 +39,7 @@ class InspectorTest {
     @Test
     fun `연료가 허용치보다 많이 줄면 경고`() {
         val report = inspect(VehicleState(fuelPercent = 82.0), VehicleState(fuelPercent = 41.0), StandardRules.Energy())
-        assertEquals(listOf(Finding("energy", WARNING, "연료 82% → 41% (41%p 감소)", StateItem.FUEL)), report.findings)
+        assertEquals(listOf(Finding("energy", WARNING, "연료 82% → 41%", StateItem.FUEL)), report.findings)
     }
 
     @Test
@@ -49,7 +49,7 @@ class InspectorTest {
             VehicleState(fuelPercent = 80.5, evSocPercent = 80.0),
             StandardRules.Energy(),
         )
-        assertEquals(listOf(Finding("energy", INFO, "배터리 30% → 80% (50%p 증가)", StateItem.EV_SOC)), report.findings)
+        assertEquals(listOf(Finding("energy", INFO, "배터리 30% → 80%", StateItem.EV_SOC)), report.findings)
     }
 
     @Test
@@ -212,7 +212,7 @@ class InspectorTest {
             2026-11-01 14:00 → 2026-11-01 15:12 (1시간 12분)
 
             확인 필요
-            - 연료 82% → 41% (41%p 감소)
+            - 연료 82% → 41%
 
             참고
             - 주행 4.2km

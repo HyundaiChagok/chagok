@@ -1,9 +1,11 @@
 package app.chagok.core.rental
 
 import app.chagok.core.inspect.Verdict
+import app.chagok.core.model.StateItem
 import app.chagok.core.record.Canonical
 import app.chagok.core.record.SnapshotRecord
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -24,17 +26,28 @@ object ShareCode {
     const val FORMAT = 1
     const val MAX_BYTES = 1_000
 
+    // 앱이 자주 꺼진 대여는 공백이 많다. 요약본도 한도를 넘으면 공백을 이만큼만 담는다.
+    private const val SUMMARY_GAPS = 3
+
+    private val SUMMARY_REPLACED = setOf("rows", "schema", "timeline", "timelineMore", "gaps")
+
     fun url(baseUrl: String, report: RentalReport): String = link(baseUrl, encode(report))
 
     fun url(baseUrl: String, record: SnapshotRecord): String = link(baseUrl, encode(record))
 
     /**
-     * "1.〈base64url〉" 꼴이고 1은 형식 버전이다. 한도를 넘으면 '변화 없음' 줄을 항목 키만 남긴 요약본을 담는다.
-     * 요약본도 한도를 넘으면 예외를 던지므로, 화면은 [url]이 실패하면 QR 대신 안내를 보여 준다.
+     * "1.〈base64url〉" 꼴이고 1은 형식 버전이다. 한도를 넘으면 '변화 없음' 줄을 항목 키만 남기고 타임라인을 건수(timelineMore)로
+     * 줄인 요약본을 담는다. 그래도 넘으면 기록 공백을 앞의 몇 건만 남기고 나머지를 gapsMore로 센다.
+     * 그래도 넘으면(경고등이 여럿 켜진 경우) 잔량 말고 줄의 인수·반납 값을 뺀다. 무엇이 어떻게 됐는지는 문구(notes)에 남는다.
+     * 그래도 넘으면 예외를 던지므로, 화면은 [url]이 실패하면 QR 대신 안내를 보여 준다.
      */
     fun encode(report: RentalReport): String {
         var bytes = deflate(Canonical.encode(report.toJson()))
         if (bytes.size > MAX_BYTES) bytes = deflate(Canonical.encode(summary(report)))
+        if (bytes.size > MAX_BYTES && report.gaps.size > SUMMARY_GAPS) {
+            bytes = deflate(Canonical.encode(summary(report, SUMMARY_GAPS)))
+        }
+        if (bytes.size > MAX_BYTES) bytes = deflate(Canonical.encode(summary(report, SUMMARY_GAPS, keepValues = false)))
         return pack(bytes)
     }
 
@@ -55,18 +68,29 @@ object ShareCode {
         return InflaterInputStream(Base64.getUrlDecoder().decode(parts[1]).inputStream()).readBytes().toString(Charsets.UTF_8)
     }
 
-    private fun summary(report: RentalReport): JsonObject {
+    private fun summary(report: RentalReport, maxGaps: Int = Int.MAX_VALUE, keepValues: Boolean = true): JsonObject {
         val full = report.toJson()
         val (unchanged, rows) = full.getValue("rows").jsonArray.partition {
             (it as JsonObject)["verdict"] == JsonPrimitive(Verdict.UNCHANGED.name)
         }
         return buildJsonObject {
-            full.filterKeys { it != "rows" && it != "schema" }.forEach { (key, value) -> put(key, value) }
+            full.filterKeys { it !in SUMMARY_REPLACED }.forEach { (key, value) -> put(key, value) }
             put("schema", "report-summary/2")
             put("reportHash", report.hash)
-            put("rows", JsonArray(rows))
+            put("rows", JsonArray(if (keepValues) rows else rows.map(::withoutValues)))
             put("unchanged", JsonArray(unchanged.map { (it as JsonObject).getValue("item") }))
+            val events = report.timeline.size + report.timelineMore
+            if (events > 0) put("timelineMore", events)
+            if (report.gaps.isNotEmpty()) put("gaps", RentalReport.gapsJson(report.gaps.take(maxGaps)))
+            if (report.gaps.size > maxGaps) put("gapsMore", report.gaps.size - maxGaps)
         }
+    }
+
+    // 잔량 줄의 값은 고객 웹의 결론 문장에 쓰므로 남긴다.
+    private fun withoutValues(row: JsonElement): JsonElement {
+        val json = row as JsonObject
+        val energy = json["item"] == JsonPrimitive(StateItem.FUEL.key) || json["item"] == JsonPrimitive(StateItem.EV_SOC.key)
+        return if (energy) json else JsonObject(json - "before" - "after")
     }
 
     private fun deflate(text: String): ByteArray {

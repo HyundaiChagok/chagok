@@ -20,7 +20,16 @@ import app.chagok.core.model.VehicleState
 class DemoVehicle {
     val fake = FakeVehicle(START)
 
-    fun driveDuringRental() = fake.update { driven(km = 312.0, fuelUsedPercent = 21.0).withLowTire(Area.FRONT_LEFT) }
+    // 버튼은 메인 스레드에서, 닫기(reset)는 컨트롤러 줄에서 온다.
+    @Volatile
+    private var driven = false
+
+    /** 대여 중 변화를 한 번만 적용한다. 다시 눌러도 주행거리가 쌓이지 않는다. */
+    fun driveDuringRental() {
+        if (driven) return
+        driven = true
+        fake.update { driven(km = 312.0, fuelUsedPercent = 21.0).withLowTire(Area.FRONT_LEFT) }
+    }
 
     fun toggleWindow() = fake.update { withWindow(Area.FRONT_RIGHT, windowsOpen[Area.FRONT_RIGHT] != true) }
 
@@ -28,14 +37,17 @@ class DemoVehicle {
 
     fun toggleSeat() = fake.update { withSeat(Area.FRONT_RIGHT, seatsOccupied[Area.FRONT_RIGHT] != true) }
 
-    fun reset() = fake.update { START }
+    fun reset() {
+        driven = false
+        fake.update { START }
+    }
 
     companion object {
         private val FOUR = listOf(Area.FRONT_LEFT, Area.FRONT_RIGHT, Area.REAR_LEFT, Area.REAR_RIGHT)
 
         val START = VehicleState(
             fuelPercent = 82.0, odometerKm = 23_410.0, tripSinceRefillKm = 210.0,
-            doorsOpen = FOUR.associateWith { false }, windowsOpen = FOUR.associateWith { false },
+            doorsOpen = FOUR.associateWith { false }, windowsOpen = FOUR.associateWith { false }, trunkOpen = false,
             headlightsOn = false, tailLampOn = false,
             seatsOccupied = mapOf(Area.FRONT_LEFT to true),
             engineOil = FluidLevel.NORMAL, brakeFluid = FluidLevel.NORMAL, washerFluid = FluidLevel.LOW,
@@ -45,16 +57,19 @@ class DemoVehicle {
             unavailable = mapOf(
                 StateItem.EV_SOC to Unavailable.Unsupported,
                 StateItem.EV_CHARGING to Unavailable.Unsupported,
+                StateItem.EV_CAPACITY to Unavailable.Unsupported,
+                StateItem.CHARGE_PORT to Unavailable.Unsupported,
                 StateItem.CABIN_LIGHT to Unavailable.Unsupported,
             ),
         )
 
         /**
          * 시연 모드에서 대본 값을 쓰는 항목. 에뮬레이터(전기차)가 바꿀 수 없거나 휘발유차 이야기에만 있는 값이다.
-         * 문·창문·라이트·경고등(그리고 반납 체크의 좌석)은 Virtual Console로 바꿀 수 있어 SDK 값을 쓴다.
+         * 문·창문·트렁크·라이트·경고등(그리고 반납 체크의 좌석)은 Virtual Console로 바꿀 수 있어 SDK 값을 쓴다.
          */
         val SCRIPTED: Set<StateItem> = setOf(
             StateItem.FUEL, StateItem.TRIP_SINCE_REFILL, StateItem.ODOMETER, StateItem.EV_SOC, StateItem.EV_CHARGING,
+            StateItem.EV_CAPACITY, StateItem.CHARGE_PORT,
             StateItem.ENGINE_OIL, StateItem.BRAKE_FLUID, StateItem.WASHER_FLUID, StateItem.TIRES, StateItem.AIRBAGS,
         )
     }

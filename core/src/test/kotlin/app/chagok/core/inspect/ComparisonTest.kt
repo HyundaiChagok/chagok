@@ -27,7 +27,7 @@ class ComparisonTest {
         )
         assertEquals(
             listOf(
-                ComparisonRow(StateItem.FUEL, "82%", "61%", Verdict.NEEDS_CHECK, listOf("연료 82% → 61% (21%p 감소)")),
+                ComparisonRow(StateItem.FUEL, "82%", "61%", Verdict.NEEDS_CHECK, listOf("연료 82% → 61%")),
                 ComparisonRow(StateItem.WASHER_FLUID, "부족", "부족", Verdict.NOTE, listOf("워셔액 부족 (시작 때부터)")),
                 ComparisonRow(StateItem.ENGINE_OIL, "정상", "정상", Verdict.UNCHANGED, emptyList()),
             ),
@@ -36,7 +36,7 @@ class ComparisonTest {
     }
 
     @Test
-    fun `값이 없으면 이유와 함께 확인 불가로 둔다`() {
+    fun `읽다 실패했으면 이유와 함께 확인 불가로 두고 이 차에 없는 항목은 줄을 만들지 않는다`() {
         val comparison = compare(
             VehicleState(fuelPercent = 82.0, unavailable = mapOf(StateItem.CABIN_LIGHT to Unavailable.Unsupported)),
             VehicleState(
@@ -50,11 +50,43 @@ class ComparisonTest {
         assertEquals(
             listOf(
                 ComparisonRow(StateItem.FUEL, "82%", null, Verdict.UNKNOWN, listOf("읽지 못함 (시간 초과)")),
-                ComparisonRow(StateItem.CABIN_LIGHT, null, null, Verdict.UNKNOWN, listOf("이 차에서 지원 안 함")),
                 ComparisonRow(StateItem.ENGINE_OIL, null, null, Verdict.UNKNOWN, listOf("읽지 못함")),
             ),
             comparison.rows,
         )
+        assertEquals(listOf(StateItem.CABIN_LIGHT), comparison.notApplicable)
+    }
+
+    @Test
+    fun `한쪽이라도 읽다 실패했으면 이 차에 없다고 보지 않는다`() {
+        val unsupported = mapOf(StateItem.BRAKE_FLUID to Unavailable.Unsupported)
+        val failed = mapOf(StateItem.BRAKE_FLUID to Unavailable.Failed("TIMEOUT"))
+        val comparison = compare(VehicleState(unavailable = unsupported), VehicleState(unavailable = failed), StateItem.BRAKE_FLUID)
+
+        assertEquals(listOf(ComparisonRow(StateItem.BRAKE_FLUID, null, null, Verdict.UNKNOWN, listOf("읽지 못함 (시간 초과)"))), comparison.rows)
+        assertEquals(emptyList(), comparison.notApplicable)
+    }
+
+    @Test
+    fun `트렁크와 충전구는 반납 때 열려 있으면 확인 필요다`() {
+        val comparison = compare(
+            VehicleState(trunkOpen = false, chargePortOpen = false),
+            VehicleState(trunkOpen = true, chargePortOpen = false),
+            StateItem.TRUNK, StateItem.CHARGE_PORT,
+        )
+        assertEquals(
+            listOf(
+                ComparisonRow(StateItem.TRUNK, "닫힘", "열림", Verdict.NEEDS_CHECK, listOf("트렁크 열림")),
+                ComparisonRow(StateItem.CHARGE_PORT, "닫힘", "닫힘", Verdict.UNCHANGED, emptyList()),
+            ),
+            comparison.rows,
+        )
+    }
+
+    @Test
+    fun `반납 때만 보는 항목은 인수 때 트렁크를 못 읽었어도 판단한다`() {
+        val comparison = compare(VehicleState(), VehicleState(trunkOpen = false), StateItem.TRUNK)
+        assertEquals(listOf(ComparisonRow(StateItem.TRUNK, null, "닫힘", Verdict.UNCHANGED, emptyList())), comparison.rows)
     }
 
     @Test

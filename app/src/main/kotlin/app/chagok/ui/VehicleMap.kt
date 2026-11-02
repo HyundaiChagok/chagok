@@ -49,12 +49,19 @@ sealed interface MapPart {
     data object Headlamps : MapPart
     data object TailLamps : MapPart
     data object CabinLight : MapPart
+    data object Trunk : MapPart
+    data object ChargePort : MapPart
 }
 
 /** 반납 체크 항목이 차의 어디인지. 잔량·경고등처럼 자리가 없는 항목은 null */
 fun CheckItem.mapPart(): MapPart? = when (this) {
     is CheckItem.WindowOpen -> MapPart.Window(area)
     is CheckItem.DoorOpen -> MapPart.Door(area)
+    is CheckItem.ClosureOpen -> when (item) {
+        StateItem.TRUNK -> MapPart.Trunk
+        StateItem.CHARGE_PORT -> MapPart.ChargePort
+        else -> null
+    }
     is CheckItem.SeatDetected -> MapPart.Seat(area)
     is CheckItem.LightOn -> when (item) {
         StateItem.HEADLIGHTS -> MapPart.Headlamps
@@ -62,14 +69,14 @@ fun CheckItem.mapPart(): MapPart? = when (this) {
         StateItem.CABIN_LIGHT -> MapPart.CabinLight
         else -> null
     }
-    is CheckItem.EnergyDrop, is CheckItem.NewTelltales -> null
+    is CheckItem.Unreadable, is CheckItem.EnergyDrop, is CheckItem.NewTelltales, is CheckItem.TelltalesUnverified -> null
 }
 
 private val SIDES = listOf(Area.FRONT_LEFT, Area.FRONT_RIGHT, Area.REAR_LEFT, Area.REAR_RIGHT)
 
 private val PARTS: List<MapPart> = SIDES.map { MapPart.Door(it) } + SIDES.map { MapPart.Window(it) } +
     Area.entries.map { MapPart.Seat(it) } + SIDES.map { MapPart.Wheel(it) } +
-    listOf(MapPart.Headlamps, MapPart.TailLamps, MapPart.CabinLight)
+    listOf(MapPart.Headlamps, MapPart.TailLamps, MapPart.CabinLight, MapPart.Trunk, MapPart.ChargePort)
 
 // 그림 단위: 차 길이가 1이다. x는 차 가운데가 0, y는 앞 끝이 0이다. 문이 열릴 자리와 전조등 빛이 뻗을 자리를 남긴다.
 private const val SPAN_X = 0.78f
@@ -122,6 +129,8 @@ fun VehicleMap(
         doorSeams(g, c)
         headlamps(g, level(MapPart.Headlamps), c)
         tailLamps(g, level(MapPart.TailLamps), c)
+        trunkLid(g, level(MapPart.Trunk), c)
+        chargePort(g, level(MapPart.ChargePort), c)
         drawPath(body, c.map.line, style = Stroke(width = max(2.dp.toPx(), g.d(0.004f))))
         SIDES.forEach { area -> openDoor(g, area, level(MapPart.Door(area)), c) }
         sweep?.let { scan(g, body, it.value, c) }
@@ -322,6 +331,31 @@ private fun DrawScope.tailLamps(g: Geo, t: Float, c: ChagokColors) {
     }
 }
 
+// 뒤 유리 뒤쪽 덮개를 주황으로 켜고 뒤로 조금 밀어 열린 것처럼 보인다.
+private fun DrawScope.trunkLid(g: Geo, t: Float, c: ChagokColors) {
+    if (t < 0.005f) return
+    val shift = 0.03f * t
+    val lid = Path().apply {
+        moveTo(g.x(-0.190f), g.y(0.838f + shift))
+        quadraticTo(g.x(0f), g.y(0.856f + shift), g.x(0.190f), g.y(0.838f + shift))
+        lineTo(g.x(0.176f), g.y(0.968f + shift))
+        quadraticTo(g.x(0f), g.y(0.984f + shift), g.x(-0.176f), g.y(0.968f + shift))
+        close()
+    }
+    drawPath(lid, c.signal.copy(alpha = 0.30f * t))
+    drawPath(lid, lerp(c.map.line, c.signal, t), style = Stroke(max(2.dp.toPx(), g.d(0.006f))))
+}
+
+// 충전구는 뒷바퀴 뒤 오른쪽에 둔다. 열렸을 때만 그린다(휘발유차에는 없다).
+private fun DrawScope.chargePort(g: Geo, t: Float, c: ChagokColors) {
+    if (t < 0.005f) return
+    val r = g.rect(0.196f, 0.902f, 0.236f, 0.948f)
+    val halo = RoundRect(r.inflate(g.d(0.012f)), CornerRadius(g.d(0.018f)))
+    drawPath(Path().apply { addRoundRect(halo) }, c.signal.copy(alpha = 0.26f * t))
+    drawRoundRect(lerp(c.map.body, c.signal, t), r.topLeft, r.size, CornerRadius(g.d(0.008f)))
+    drawRoundRect(lerp(c.map.line, c.signalInk, t), r.topLeft, r.size, CornerRadius(g.d(0.008f)), style = Stroke(1.5.dp.toPx()))
+}
+
 // 문이 있던 자리를 비우고 문짝을 앞쪽 경첩을 축으로 바깥으로 벌린다(t=1일 때 42도).
 private fun DrawScope.openDoor(g: Geo, area: Area, t: Float, c: ChagokColors) {
     if (t < 0.005f) return
@@ -338,16 +372,16 @@ private fun DrawScope.openDoor(g: Geo, area: Area, t: Float, c: ChagokColors) {
     drawLine(lerp(c.map.line, c.signal, t), hinge, end, strokeWidth = g.d(0.024f), cap = StrokeCap.Round)
 }
 
-// 앞에서 뒤로 내려가는 선과 그 뒤에 남는 옅은 빛. 차체 밖으로는 그리지 않는다.
+// 앞에서 뒤로 내려가는 선과 그 뒤에 남는 옅은 빛. 차체 밖으로는 그리지 않는다. 읽는 중은 '지금 볼 것'이 아니라서 주황을 쓰지 않는다.
 private fun DrawScope.scan(g: Geo, body: Path, progress: Float, c: ChagokColors) {
     val v = -0.04f + progress * 1.08f
     clipPath(body) {
         val top = g.y(v - 0.16f)
         drawRect(
-            Brush.verticalGradient(listOf(Color.Transparent, c.signal.copy(alpha = 0.30f)), startY = top, endY = g.y(v)),
+            Brush.verticalGradient(listOf(Color.Transparent, c.ink2.copy(alpha = 0.26f)), startY = top, endY = g.y(v)),
             topLeft = Offset(0f, top),
             size = Size(size.width, g.d(0.16f)),
         )
-        drawLine(c.signal, Offset(0f, g.y(v)), Offset(size.width, g.y(v)), strokeWidth = 3.dp.toPx())
+        drawLine(c.ink2, Offset(0f, g.y(v)), Offset(size.width, g.y(v)), strokeWidth = 3.dp.toPx())
     }
 }
