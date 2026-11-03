@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 단색 아이콘(API 33 이상). 108dp 격자의 안전 영역(가운데 지름 66dp) 안에 둔다. 메뉴 아이콘처럼 보이지 않게 막대를 굵게, 맨 위를 짧게 그린다. -->
+<!-- 단색 아이콘(API 33 이상). 앞면과 같은 그림을 한 색으로 그린다. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M37.5,31H56.5A6.5,6.5 0,0 1,63 37.5A6.5,6.5 0,0 1,56.5 44H37.5A6.5,6.5 0,0 1,31 37.5A6.5,6.5 0,0 1,37.5 31Z" />
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M37.5,47.5H70.5A6.5,6.5 0,0 1,77 54A6.5,6.5 0,0 1,70.5 60.5H37.5A6.5,6.5 0,0 1,31 54A6.5,6.5 0,0 1,37.5 47.5Z" />
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M37.5,64H70.5A6.5,6.5 0,0 1,77 70.5A6.5,6.5 0,0 1,70.5 77H37.5A6.5,6.5 0,0 1,31 70.5A6.5,6.5 0,0 1,37.5 64Z" />
+    <group
+        android:scaleX="0.58"
+        android:scaleY="0.58"
+        android:translateX="25.00"
+        android:translateY="26.45">
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M26.38,21.18 L31.62,12.82 Q34.00,9.00 38.50,9.00 L53.50,9.00 Q58.00,9.00 60.96,12.39 L69.04,21.61 Q72.00,25.00 67.50,25.00 L28.50,25.00 Q24.00,25.00 26.38,21.18 Z M14,29 H86 A8,8 0 0 1 94,37 V41 A6,6 0 0 1 88,47 H84.5 A11.5,11.5 0 0 0 61.5,47 H38.5 A11.5,11.5 0 0 0 15.5,47 H12 A6,6 0 0 1 6,41 V37 A8,8 0 0 1 14,29 Z M18.5,47 A8.5,8.5 0 1 0 35.5,47 A8.5,8.5 0 1 0 18.5,47 Z M64.5,47 A8.5,8.5 0 1 0 81.5,47 A8.5,8.5 0 1 0 64.5,47 Z" />
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M10.5,62 H89.5 A4.5,4.5 0 0 1 89.5,71 H10.5 A4.5,4.5 0 0 1 10.5,62 Z" />
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M10.5,77 H45.5 A4.5,4.5 0 0 1 45.5,86 H10.5 A4.5,4.5 0 0 1 10.5,77 Z" />
+    </group>
 </vector>
