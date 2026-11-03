@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/chagok-logo-dark.svg">
+  <img src="brand/chagok-logo.svg" alt="차곡" height="64">
+</picture>
+
 # 차곡 (Chagok)
 
 렌터카 인수·반납 기록 앱입니다. **외관은 사진이, 기능은 차가 기록합니다.**
